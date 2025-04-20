@@ -6,18 +6,35 @@ erDiagram
     AdminUser {
         INT adminUserId PK
         VARCHAR email UK "Email unique pour la connexion admin"
-        VARCHAR passwordHash
-        VARCHAR name
+        VARCHAR password
+        VARCHAR firstName
+        VARCHAR userName
     }
     
     Client {
         INT clientId PK
         VARCHAR name "Nom de la supérette/propriétaire"
         VARCHAR email UK "Email unique pour la connexion client"
-        VARCHAR passwordHash
+        VARCHAR password
         VARCHAR address
         VARCHAR contractStatus "e.g., Actif/Résilié"
         VARCHAR currencyPreference "e.g., EUR, USD, CAD / Dévive par défaut euros"
+    }
+
+    Email {
+        INT emailId PK
+        TEXT content "Contenu du modèle"
+        TIMESTAMP createdAt
+        VARCHAR subject "Sujet"
+        VARCHAR type "Type (Rappel, Promotion)"
+    }
+
+    EmailSend {
+        INT emailSendId PK
+        INT emailId FK
+        INT clientId FK
+        TIMESTAMP sentAt
+        VARCHAR status "SUCCÈS/ÉCHEC"
     }
 
     Supplier {
@@ -100,6 +117,8 @@ erDiagram
     }
 
     AdminUser ||--o{ Client : "Gère"
+    Client ||--o{ EmailSend : "Reçoit"
+    Email ||--o{ EmailSend : "Inclut"
     Client ||--o{ Supplier : "Gère"
     Client ||--o{ Category : "Définit"
     Client ||--o{ Product : "Possède"
@@ -140,7 +159,8 @@ classDiagram
         +int adminUserId
         +String email
         +String passwordHash
-        +String name
+        +String firstName
+        +String userName
         +List~Client~ managedClients
     }
 
@@ -159,6 +179,23 @@ classDiagram
         +List~Sale~ sales
         +List~Promotion~ promotions
         +List~BackupLog~ backupLogs
+        +List~EmailSend~ emailSends
+    }
+
+    class Email {
+        +int emailId
+        +String subject
+        +String content
+        +String type
+        +Timestamp createdAt
+    }
+
+    class EmailSend {
+        +int emailSendId
+        +Email email
+        +Client client
+        +Timestamp sentAt
+        +String status
     }
 
     class Supplier {
@@ -265,6 +302,9 @@ classDiagram
     Client "1" -- "*" Sale : Génère
     Client "1" -- "*" Promotion : Crée
     Client "1" -- "*" BackupLog : Sauvegarde
+    Client "1" -- "*" EmailSend : "Reçoit"
+    
+    Email "1" -- "*" EmailSend : "Utilisé dans"
     
     Category "1" -- "*" Product : Contient
     Supplier "1" -- "*" StockItem : Approvisionne

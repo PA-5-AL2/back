@@ -3,13 +3,12 @@ package esgi.easisell.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.List;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
 @Entity
-@NoArgsConstructor
-@AllArgsConstructor
+@Table(name="ADMIN_USER")
 public class AdminUser {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -18,11 +17,9 @@ public class AdminUser {
     @Column(unique = true)
     private String email;
 
-    private String passwordHash;
-    private String name;
-
-    @OneToMany(mappedBy = "adminUser")
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    private List<Client> managedClients;
+    private String password;
+    private String firstname;
+    private String lastName;
+    private String userName;
+    private LocalDateTime createdAt;
 }

@@ -8,14 +8,15 @@ import java.util.UUID;
 
 @Data
 @Entity
-@NoArgsConstructor
-@AllArgsConstructor
+@Table(name = "SALE_ITEM")
 public class SaleItem {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID saleItemId;
 
-    // Relations
+    private int quantitySold;
+    private BigDecimal priceAtSale;
+
     @ManyToOne
     @JoinColumn(name = "sale_id")
     @ToString.Exclude
@@ -25,8 +26,4 @@ public class SaleItem {
     @JoinColumn(name = "product_id")
     @ToString.Exclude
     private Product product;
-
-    // Champs
-    private int quantitySold;
-    private BigDecimal priceAtSale;
 }

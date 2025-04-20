@@ -8,15 +8,19 @@ import java.util.UUID;
 
 @Data
 @Entity
-@NoArgsConstructor
-@AllArgsConstructor
-public class BackupLog {
+@Table(name = "EMAIL_SEND")
+public class EmailSend {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID backupId;
+    private UUID emailSendId;
 
-    private Timestamp date;
-    private String status; // SUCCÈS/ÉCHEC
+    private Timestamp sentAt;
+    private String status;  // SUCCÈS/ÉCHEC
+
+    @ManyToOne
+    @JoinColumn(name = "email_id")
+    @ToString.Exclude
+    private Email email;
 
     @ManyToOne
     @JoinColumn(name = "client_id")

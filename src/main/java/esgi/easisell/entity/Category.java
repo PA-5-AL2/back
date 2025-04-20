@@ -3,13 +3,11 @@ package esgi.easisell.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @Data
 @Entity
-@NoArgsConstructor
-@AllArgsConstructor
+@Table(name = "CATEGORY")
 public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -21,9 +19,4 @@ public class Category {
     @JoinColumn(name = "client_id")
     @ToString.Exclude
     private Client client;
-
-    @OneToMany(mappedBy = "category")
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    private List<Product> products;
 }

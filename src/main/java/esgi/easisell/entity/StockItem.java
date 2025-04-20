@@ -8,14 +8,18 @@ import java.util.UUID;
 
 @Data
 @Entity
-@NoArgsConstructor
-@AllArgsConstructor
+@Table(name = "STOCK_ITEM")
 public class StockItem {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID stockItemId;
 
-    // Relations
+    private int quantity;
+    private int reorderThreshold;
+    private Timestamp purchaseDate;
+    private Timestamp expirationDate;
+    private BigDecimal purchasePrice;
+
     @ManyToOne
     @JoinColumn(name = "product_id")
     @ToString.Exclude
@@ -25,13 +29,6 @@ public class StockItem {
     @JoinColumn(name = "client_id")
     @ToString.Exclude
     private Client client;
-
-    // Champs
-    private int quantity;
-    private int reorderThreshold;
-    private Timestamp purchaseDate;
-    private Timestamp expirationDate;
-    private BigDecimal purchasePrice;
 
     @ManyToOne
     @JoinColumn(name = "supplier_id")

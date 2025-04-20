@@ -7,8 +7,7 @@ import java.util.UUID;
 
 @Data
 @Entity
-@NoArgsConstructor
-@AllArgsConstructor
+@Table(name = "SUPPLIER")
 public class Supplier {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

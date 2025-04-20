@@ -9,14 +9,19 @@ import java.util.UUID;
 
 @Data
 @Entity
-@NoArgsConstructor
-@AllArgsConstructor
+@Table(name = "PROMOTION")
 public class Promotion {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID promotionId;
 
-    // Relations
+    private String promotionCode;
+    private String description;
+    private String discountType;  // PERCENT/FIXED
+    private BigDecimal discountValue;
+    private Timestamp startDate;
+    private Timestamp endDate;
+
     @ManyToOne
     @JoinColumn(name = "product_id")
     @ToString.Exclude
@@ -26,12 +31,4 @@ public class Promotion {
     @JoinColumn(name = "client_id")
     @ToString.Exclude
     private Client client;
-
-    // Champs
-    private String promotionCode;
-    private String description;
-    private String discountType; // PERCENT/FIXED
-    private BigDecimal discountValue;
-    private Timestamp startDate;
-    private Timestamp endDate;
 }
