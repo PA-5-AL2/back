@@ -34,7 +34,8 @@ erDiagram
         INT emailId FK
         INT clientId FK
         TIMESTAMP sentAt
-        VARCHAR status "SUCCÈS/ÉCHEC"
+        VARCHAR status
+        VARCHAR emailType "BACKUP|PROMOTION|REMINDER"
     }
 
     Supplier {
@@ -109,23 +110,15 @@ erDiagram
         VARCHAR currency "Devise utilisée (ex: EUR)"
     }
 
-    BackupLog {
-        INT backupId PK
-        TIMESTAMP date
-        VARCHAR status "SUCCÈS/ÉCHEC"
-        INT clientId FK
-    }
-
     AdminUser ||--o{ Client : "Gère"
     Client ||--o{ EmailSend : "Reçoit"
-    Email ||--o{ EmailSend : "Inclut"
+    Email ||--o{ EmailSend : "Utilisé_dans"
     Client ||--o{ Supplier : "Gère"
     Client ||--o{ Category : "Définit"
     Client ||--o{ Product : "Possède"
     Client ||--o{ StockItem : "Stocke"
     Client ||--o{ Sale : "Génère"
     Client ||--o{ Promotion : "Crée"
-    Client ||--o{ BackupLog : "Historique de sauvegarde"
     Category ||--o{ Product : "Contient"
     Supplier ||--o{ StockItem : "Approvisionne"
     Product ||--o{ StockItem : "Lot en stock"
@@ -158,7 +151,7 @@ classDiagram
     class AdminUser {
         +int adminUserId
         +String email
-        +String passwordHash
+        +String password
         +String firstName
         +String userName
         +List~Client~ managedClients
@@ -168,7 +161,7 @@ classDiagram
         +int clientId
         +String name
         +String email
-        +String passwordHash
+        +String password
         +String address
         +String contractStatus
         +String currencyPreference
@@ -191,11 +184,12 @@ classDiagram
     }
 
     class EmailSend {
-        +int emailSendId
+        +UUID emailSendId
         +Email email
         +Client client
         +Timestamp sentAt
         +String status
+        +String emailType "Nouveau champ"
     }
 
     class Supplier {
@@ -276,13 +270,6 @@ classDiagram
         +String currency
     }
 
-    class BackupLog {
-        +int backupId
-        +Timestamp date
-        +String status
-        +Client client
-    }
-
     AdminUser --|> Object : (Implicit Java Inheritance)
     Client --|> Object
     Supplier --|> Object
@@ -301,11 +288,10 @@ classDiagram
     Client "1" -- "*" StockItem : Stocke
     Client "1" -- "*" Sale : Génère
     Client "1" -- "*" Promotion : Crée
-    Client "1" -- "*" BackupLog : Sauvegarde
     Client "1" -- "*" EmailSend : "Reçoit"
-    
-    Email "1" -- "*" EmailSend : "Utilisé dans"
-    
+
+    Email "1" -- "*" EmailSend : "Modèle"
+
     Category "1" -- "*" Product : Contient
     Supplier "1" -- "*" StockItem : Approvisionne
     

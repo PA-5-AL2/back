@@ -8,18 +8,26 @@ import java.util.UUID;
 
 @Data
 @Entity
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "PAYMENT")
 public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "payment_id")
     private UUID paymentId;
 
-    private String type;  // Espèces, Carte...
-    private BigDecimal amount;
-    private String currency;  // EUR, USD, etc.
+    @Column(nullable = false)
+    private String type; // CASH, CARD, etc.
 
-    @ManyToOne
-    @JoinColumn(name = "sale_id")
+    @Column(nullable = false, precision = 19, scale = 2)
+    private BigDecimal amount;
+
+    @Column(nullable = false)
+    private String currency; // EUR, ...
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sale_id", nullable = false)
     @ToString.Exclude
     private Sale sale;
 }
