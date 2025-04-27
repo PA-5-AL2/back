@@ -5,28 +5,19 @@ import lombok.*;
 
 import java.util.*;
 
-@Data
 @Entity
-@NoArgsConstructor
-@AllArgsConstructor
-@Table(name="CLIENT")
-public class Client {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "client_id")
-    private UUID clientId;
-
-    @Column(nullable = false)
+@Table(name = "CLIENT")
+@PrimaryKeyJoinColumn(name = "user_id")
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor
+@DiscriminatorValue("CLIENT")
+public class Client extends User {
     private String name;
 
-    @Column(unique = true, nullable = false)
-    private String email;
-
-    @Column(nullable = false)
-    private String password;
-
     private String address;
+    @Column(nullable = false)
     private String contractStatus;
+    @Column(nullable = false)
     private String currencyPreference;
 
     @ManyToOne(fetch = FetchType.LAZY)

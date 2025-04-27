@@ -26,7 +26,7 @@ public class Email {
     private String content;
 
     @Column(nullable = false)
-    private String type; // RAPPEL, PROMOTION...
+    private String type;
 
     @Column(nullable = false, updatable = false)
     private Timestamp createdAt;

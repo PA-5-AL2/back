@@ -18,13 +18,13 @@ public class Payment {
     private UUID paymentId;
 
     @Column(nullable = false)
-    private String type; // CASH, CARD, etc.
+    private String type;
 
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal amount;
 
     @Column(nullable = false)
-    private String currency; // EUR, ...
+    private String currency;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sale_id", nullable = false)

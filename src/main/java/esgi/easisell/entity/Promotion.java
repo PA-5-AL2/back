@@ -24,7 +24,7 @@ public class Promotion {
     private String description;
 
     @Column(nullable = false)
-    private String discountType; // PERCENT or FIXED
+    private String discountType;
 
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal discountValue;

@@ -31,7 +31,7 @@ public class EmailSend {
     private Timestamp sentAt;
 
     @Column(nullable = false)
-    private String status; // SUCCES/ECHEC
+    private String status;
 
     @Column(nullable = false)
     private String emailType;
