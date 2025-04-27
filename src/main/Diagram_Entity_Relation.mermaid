@@ -1,0 +1,97 @@
+
+erDiagram
+    AdminUser {
+        INT adminUserId PK
+        VARCHAR email UK "Unique email for admin login"
+        VARCHAR passwordHash
+        VARCHAR name
+    }
+
+    Client {
+        INT clientId PK
+        VARCHAR name "Supérette Name/Owner Name"
+        VARCHAR email UK "Unique email for client login"
+        VARCHAR passwordHash
+        VARCHAR address
+        VARCHAR contractStatus "e.g., Active, Terminated"
+        VARCHAR currencyPreference "e.g., EUR, USD, CAD"
+    }
+
+    Supplier {
+        INT supplierId PK
+        VARCHAR name
+        VARCHAR contactInfo
+        INT clientId FK "Suppliers are specific to a Client"
+    }
+
+    Category {
+        INT categoryId PK
+        VARCHAR name "e.g., Boissons, Boulangerie, Fromages"
+        INT clientId FK "Categories are specific to a Client"
+    }
+
+    Product {
+        INT productId PK
+        VARCHAR name "e.g., Pain baguette, Coca-Cola 1.5L, Fromage Emmental"
+        VARCHAR description
+        VARCHAR barcode UK "Nullable, Unique per client if present"
+        VARCHAR brand "e.g., Soumam, Danone"
+        DECIMAL unitPrice
+        INT categoryId FK
+        INT clientId FK "Products belong to a specific Client"
+    }
+
+    StockItem {
+        INT stockItemId PK
+        INT productId FK
+        INT clientId FK "Stock belongs to a specific Client"
+        INT quantity "Current quantity in stock"
+        TIMESTAMP purchaseDate "Optional: When the item was received"
+        TIMESTAMP expirationDate "Crucial pour les alertes"
+        DECIMAL purchasePrice "Optional: Cost price"
+        INT supplierId FK "Optional: Link to supplier"
+    }
+
+    Sale {
+        INT saleId PK
+        INT clientId FK "Sale belongs to a specific Client"
+        TIMESTAMP saleTimestamp "Date and time of the sale"
+        DECIMAL totalAmount "Total calculated amount"
+        VARCHAR paymentMethod "e.g., Cash, Card"
+        DECIMAL amountPaid "Amount received from customer"
+        DECIMAL changeGiven "Monnaie rendue"
+        BOOLEAN isDeferred "Flag for deferred payment tracking"
+    }
+
+    SaleItem {
+        INT saleItemId PK
+        INT saleId FK "Links to the specific Sale"
+        INT productId FK "Links to the Product sold"
+        INT quantitySold
+        DECIMAL priceAtSale "Price of the product at the time of sale"
+    }
+
+    Promotion {
+        INT promotionId PK
+        INT productId FK "Promotion applies to a specific Product"
+        INT clientId FK "Promotion belongs to a specific Client"
+        VARCHAR description "e.g., Vente flash Tomates"
+        VARCHAR discountType "PERCENT or FIXED"
+        DECIMAL discountValue
+        TIMESTAMP startDate
+        TIMESTAMP endDate
+    }
+
+    Client ||--o{ Supplier : "manages"
+    Client ||--o{ Category : "defines"
+    Client ||--o{ Product : "owns"
+    Client ||--o{ StockItem : "holds"
+    Client ||--o{ Sale : "generates"
+    Client ||--o{ Promotion : "creates"
+    Category ||--o{ Product : "contains"
+    Supplier ||--o{ StockItem : "supplies"
+    Product ||--o{ StockItem : "instances_in"
+    Product ||--o{ SaleItem : "appears_in"
+    Product ||--o{ Promotion : "applies_to"
+    Sale ||--|{ SaleItem : "includes"
+    AdminUser ||--o{ Client : "Manages"
