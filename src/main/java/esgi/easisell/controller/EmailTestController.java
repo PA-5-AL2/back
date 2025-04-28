@@ -21,7 +21,7 @@ public class EmailTestController {
     public String testPaymentReminder() {
         try {
             Client client = new Client();
-            client.setUsername("client-test@example.com"); // Mettez une vraie adresse email pour le test
+            client.setUsername("chancybeau@example.com");
             client.setFirstName("Jean");
             client.setContractStatus("ACTIVE");
 
@@ -43,7 +43,7 @@ public class EmailTestController {
     public String testCancellation() {
         try {
             Client client = new Client();
-            client.setUsername("client-test@example.com"); // Mettez une vraie adresse email pour le test
+            client.setUsername("chancybeau@example.com");
             client.setFirstName("Marie");
 
             emailService.sendCancellationConfirmation(
