@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{emails/fragments/styles.html}">
+<head>
+    <title>Bienvenue sur EasiSell</title>
+</head>
+<body>
+<div class="header">
+    <h1>Bienvenue sur EasiSell</h1>
+</div>
+
+<div class="content">
+    <p>Bonjour <span th:text="${user.firstName != null ? user.firstName : 'Client'}"></span>,</p>
+
+    <p>Votre inscription sur notre plateforme a bien été prise en compte.</p>
+
+    <div class="credentials">
+        <h3>Vos identifiants de connexion :</h3>
+        <p><strong>Email :</strong> <span th:text="${user.username}"></span></p>
+        <p><strong>Mot de passe temporaire :</strong> <span th:text="${tempPassword}"></span></p>
+    </div>
+
+    <p>Pour votre sécurité, nous vous recommandons de :</p>
+    <ol>
+        <li>Vous connecter dès que possible</li>
+        <li>Changer votre mot de passe dans la section "Mon compte"</li>
+    </ol>
+
+    <p style="text-align: center; margin: 25px 0;">
+        <a th:href="${loginUrl}" class="button">Se connecter</a>
+    </p>
+
+    <p>Si vous n'êtes pas à l'origine de cette inscription, veuillez ignorer cet email.</p>
+</div>
+
+<div class="footer">
+    <p>© 2025 EasiSell. Tous droits réservés.</p>
+    <p>
+        <a th:href="${contactUrl}">Contact</a> |
+        <a th:href="${termsUrl}">Conditions d'utilisation</a>
+    </p>
+</div>
+</body>
+</html>

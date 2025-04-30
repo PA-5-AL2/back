@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{emails/fragments/styles.html}">
+<head>
+    <title>Rappel de paiement</title>
+</head>
+<body>
+<div class="header" style="background-color: #FF9800;">
+    <h1>Rappel de paiement</h1>
+</div>
+
+<div class="content">
+    <p>Bonjour <span th:text="${user.firstName != null ? user.firstName : 'Client'}"></span>,</p>
+
+    <p>Nous vous informons que votre paiement pour le service <strong th:text="${serviceName}">Service</strong> est en attente.</p>
+
+    <p><strong>Montant dû :</strong> <span th:text="${amount} + ' ' + ${currency}"></span></p>
+    <p><strong>Date limite :</strong> <span th:text="${#temporals.format(dueDate, 'dd/MM/yyyy')}"></span></p>
+
+    <div th:if="${latePayment}">
+        <p style="color: #D32F2F; font-weight: bold;">
+            Votre paiement est en retard. Veuillez régulariser votre situation au plus vite.
+        </p>
+    </div>
+
+    <p style="text-align: center; margin: 25px 0;">
+        <a th:href="${paymentUrl}" class="button" style="background-color: #FF9800;">Payer maintenant</a>
+    </p>
+
+    <p>Si vous souhaitez résilier votre contrat :</p>
+    <p>
+        <a th:href="${cancellationUrl}">Demander la résiliation</a>
+    </p>
+</div>
+
+<div class="footer">
+    <p>© 2025 EasiSell. Tous droits réservés.</p>
+</div>
+</body>
+</html>

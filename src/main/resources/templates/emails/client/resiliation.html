@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{emails/fragments/styles.html}">
+<head>
+    <title>Confirmation de résiliation</title>
+</head>
+<body>
+<div class="header" style="background-color: #F44336;">
+    <h1>Confirmation de résiliation</h1>
+</div>
+
+<div class="content">
+    <p>Bonjour <span th:text="${user.firstName != null ? user.firstName : 'Client'}"></span>,</p>
+
+    <p>Nous confirmons la résiliation de votre contrat avec EasiSell, effective à partir du <strong th:text="${#temporals.format(effectiveDate, 'dd/MM/yyyy')}"></strong>.</p>
+
+    <h3>Détails de la résiliation :</h3>
+    <ul>
+        <li>Service concerné : <span th:text="${serviceName}"></span></li>
+        <li>Date de fin : <span th:text="${#temporals.format(endDate, 'dd/MM/yyyy')}"></span></li>
+        <li>Référence : <span th:text="${reference}"></span></li>
+    </ul>
+
+    <p>Vous n'aurez plus accès à notre plateforme après cette date.</p>
+
+    <p>Si vous souhaitez réactiver votre compte :</p>
+    <p style="text-align: center; margin: 25px 0;">
+        <a th:href="${reactivationUrl}" class="button" style="background-color: #F44336;">Réactiver mon compte</a>
+    </p>
+</div>
+
+<div class="footer">
+    <p>© 2025 EasiSell. Tous droits réservés.</p>
+    <p>Cet email a été envoyé automatiquement, merci de ne pas y répondre.</p>
+</div>
+</body>
+</html>
