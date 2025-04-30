@@ -5,4 +5,5 @@ import lombok.Data;
 @Data
 public class UpdateAdminDTO {
     private String firstName;
+    private String username;
 }
