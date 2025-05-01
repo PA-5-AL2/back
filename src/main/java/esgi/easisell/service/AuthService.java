@@ -55,6 +55,7 @@ public class AuthService {
 
         user.setUsername(authDTO.getUsername());
         user.setPassword(passwordEncoder.encode(authDTO.getPassword()));
+        user.setFirstName(authDTO.getUsername().split("@")[0]); // Exemple de génération de firstName
 
         return userRepository.save(user);
     }
@@ -71,6 +72,7 @@ public class AuthService {
             authData.put("token", jwtUtils.generateToken(authDTO.getUsername()));
             authData.put("type", "Bearer");
             authData.put("role", user.getRole());
+            authData.put("userId", user.getUserId());
 
             return authData;
         }

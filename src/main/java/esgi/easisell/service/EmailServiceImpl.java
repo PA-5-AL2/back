@@ -16,6 +16,7 @@ import org.thymeleaf.context.Context;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.Map;
 
 @Service
@@ -28,25 +29,22 @@ public class EmailServiceImpl implements EmailService {
 
     @Async
     @Override
-    public void sendPreRegistrationEmail(User user, String tempPassword) throws EmailException {
+    public void sendPreRegistrationEmail(User user, String rawPassword) throws EmailException {
         try {
-            Context context = new Context();
-            context.setVariable("user", user);
-            context.setVariable("tempPassword", tempPassword);
-            context.setVariable("loginUrl", env.getProperty("app.frontend.url") + "/login");
-            context.setVariable("contactUrl", env.getProperty("app.contact.url"));
-            context.setVariable("termsUrl", env.getProperty("app.terms.url"));
+            Map<String, Object> variables = new HashMap<>();
+            variables.put("user", user);
+            variables.put("tempPassword", rawPassword);
 
-            String content = templateEngine.process("emails/client/pre-inscription", context);
+            // Vérification des valeurs null pour les URLs
+            String frontendUrl = env.getProperty("app.frontend.url");
+            variables.put("loginUrl", frontendUrl != null ? frontendUrl + "/login" : "#");
+            variables.put("contactUrl", env.getProperty("app.contact.url", "#"));
+            variables.put("termsUrl", env.getProperty("app.terms.url", "#"));
 
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setTo(user.getUsername());
-            helper.setSubject("Bienvenue sur EasiSell - Inscription confirmée");
-            helper.setText(content, true);
-
-            mailSender.send(message);
-
+            sendHtmlEmail(user.getUsername(),
+                    "Bienvenue sur EasiSell - Inscription confirmée",
+                    "emails/client/pre-inscription",
+                    variables);
         } catch (Exception e) {
             throw new EmailException("Failed to send pre-registration email to " + user.getUsername(), e);
         }
@@ -57,20 +55,20 @@ public class EmailServiceImpl implements EmailService {
     public void sendPaymentReminder(Client client, String serviceName, BigDecimal amount,
                                     String currency, LocalDate dueDate, boolean isLate) throws EmailException {
         try {
-            Context context = new Context();
-            context.setVariable("user", client);
-            context.setVariable("serviceName", serviceName);
-            context.setVariable("amount", amount);
-            context.setVariable("currency", currency);
-            context.setVariable("dueDate", dueDate);
-            context.setVariable("latePayment", isLate);
-            context.setVariable("paymentUrl", env.getProperty("app.payment.url"));
-            context.setVariable("cancellationUrl", env.getProperty("app.cancellation.url"));
+            Map<String, Object> variables = Map.of(
+                    "client", client,
+                    "serviceName", serviceName,
+                    "amount", amount,
+                    "currency", currency,
+                    "dueDate", dueDate,
+                    "isLate", isLate,
+                    "paymentUrl", env.getProperty("app.payment.url")
+            );
 
-            String content = templateEngine.process("emails/client/rappel-paiement", context);
-
-            sendHtmlEmail(client.getUsername(), "EasiSell - Rappel de paiement", content);
-
+            sendHtmlEmail(client.getUsername(),
+                    "Rappel de paiement pour votre service " + serviceName,
+                    "emails/payment-reminder",
+                    variables);
         } catch (Exception e) {
             throw new EmailException("Failed to send payment reminder to " + client.getUsername(), e);
         }
@@ -82,18 +80,18 @@ public class EmailServiceImpl implements EmailService {
                                              LocalDate effectiveDate, LocalDate endDate,
                                              String reference) throws EmailException {
         try {
-            Context context = new Context();
-            context.setVariable("user", client);
-            context.setVariable("serviceName", serviceName);
-            context.setVariable("effectiveDate", effectiveDate);
-            context.setVariable("endDate", endDate);
-            context.setVariable("reference", reference);
-            context.setVariable("reactivationUrl", env.getProperty("app.reactivation.url"));
+            Map<String, Object> variables = Map.of(
+                    "client", client,
+                    "serviceName", serviceName,
+                    "effectiveDate", effectiveDate,
+                    "endDate", endDate,
+                    "reference", reference
+            );
 
-            String content = templateEngine.process("emails/client/resiliation", context);
-
-            sendHtmlEmail(client.getUsername(), "EasiSell - Confirmation de résiliation", content);
-
+            sendHtmlEmail(client.getUsername(),
+                    "Confirmation de résiliation de votre abonnement",
+                    "emails/cancellation-confirmation",
+                    variables);
         } catch (Exception e) {
             throw new EmailException("Failed to send cancellation confirmation to " + client.getUsername(), e);
         }
@@ -105,7 +103,7 @@ public class EmailServiceImpl implements EmailService {
                               Map<String, Object> variables) throws EmailException {
         try {
             Context context = new Context();
-            variables.forEach(context::setVariable);
+            context.setVariables(variables);
 
             String content = templateEngine.process(templateName, context);
 
@@ -116,18 +114,8 @@ public class EmailServiceImpl implements EmailService {
             helper.setText(content, true);
 
             mailSender.send(message);
-
         } catch (Exception e) {
             throw new EmailException("Failed to send HTML email to " + to, e);
         }
-    }
-
-    private void sendHtmlEmail(String to, String subject, String htmlContent) throws MessagingException {
-        MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-        helper.setTo(to);
-        helper.setSubject(subject);
-        helper.setText(htmlContent, true);
-        mailSender.send(message);
     }
 }
