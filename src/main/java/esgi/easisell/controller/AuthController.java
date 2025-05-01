@@ -1,7 +1,9 @@
 package esgi.easisell.controller;
 
 import esgi.easisell.dto.AuthDTO;
+import esgi.easisell.entity.User;
 import esgi.easisell.service.AuthService;
+import esgi.easisell.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService authService;
+    private final EmailService emailService;
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody AuthDTO authDTO) {
@@ -27,7 +30,11 @@ public class AuthController {
         }
 
         try {
-            return ResponseEntity.ok(authService.registerUser(authDTO));
+            User registeredUser = authService.registerUser(authDTO);
+            if ("client".equalsIgnoreCase(authDTO.getRole())) {
+                emailService.sendPreRegistrationEmail(registeredUser, authDTO.getPassword());
+            }
+            return ResponseEntity.ok(registeredUser);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
