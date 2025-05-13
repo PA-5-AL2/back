@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmation de résiliation</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #F44336; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; }
+        .footer { margin-top: 20px; padding: 10px; text-align: center; font-size: 0.8em; color: #777; }
+        .button { background-color: #F44336; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block; }
+        .details { background: #f9f9f9; padding: 15px; border-left: 4px solid #F44336; margin: 15px 0; }
+    </style>
+</head>
+<body>
+<div class="header">
+    <img th:if="${logoUrl}" th:src="${logoUrl}" alt="EasiSell Logo" style="max-width: 150px; height: auto;"/>
+    <h1>Confirmation de résiliation</h1>
+</div>
+
+<div class="content">
+    <p>Bonjour <span th:text="${client.firstName != null ? client.firstName : 'Client'}">Client</span>,</p>
+
+    <p>Nous confirmons que la résiliation de votre abonnement chez EasiSell a bien été effectuée.</p>
+
+    <div class="details">
+        <h3>Détails de votre résiliation :</h3>
+        <ul>
+            <li>Numéro de client : <strong th:text="${client.userId}">REF12345</strong></li>
+            <li>Service concerné : <strong th:text="${serviceName}">Abonnement Premium</strong></li>
+            <li>Date effective de fin : <strong th:text="${#temporals.format(effectiveDate, 'dd/MM/yyyy')}">01/01/2025</strong></li>
+            <li>Fin d'accès à nos services : <strong th:text="${#temporals.format(endDate, 'dd/MM/yyyy')}">01/02/2025</strong></li>
+            <li>Référence : <strong th:text="${reference}">RES-123456</strong></li>
+        </ul>
+    </div>
+
+    <p>Conformément à nos conditions générales, vous conserverez l'accès à nos services jusqu'à la date de fin mentionnée ci-dessus.</p>
+
+    <p>Si vous souhaitez réactiver votre compte avant cette date :</p>
+    <p style="text-align: center; margin: 25px 0;">
+        <a th:href="${reactivationUrl}" class="button">Réactiver mon compte</a>
+    </p>
+
+    <p>Nous vous remercions pour la confiance que vous nous avez accordée et espérons vous revoir bientôt parmi nos clients.</p>
+</div>
+
+<div class="footer">
+    <p>© 2025 EasiSell. Tous droits réservés.</p>
+    <p>Cet email a été envoyé automatiquement, merci de ne pas y répondre.</p>
+</div>
+</body>
+</html>

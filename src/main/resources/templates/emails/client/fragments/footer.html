@@ -1,0 +1,13 @@
+<div class="footer" style="margin-top: 20px; padding: 10px; text-align: center; font-size: 0.8em; color: #777;"
+     xmlns:th="http://www.w3.org/1999/xhtml">
+    <p>© 2025 EasiSell. Tous droits réservés.</p>
+    <p>
+        <a th:href="${contactUrl}" style="color: #4CAF50;">Contact</a> |
+        <a th:href="${termsUrl}" style="color: #4CAF50;">Conditions d'utilisation</a>
+    </p>
+    <p th:if="${unsubscribeUrl}">
+        <a th:href="${unsubscribeUrl}" style="color: #777; font-size: 0.7em;">Se désabonner</a>
+    </p>
+</div>
+</body>
+</html>
