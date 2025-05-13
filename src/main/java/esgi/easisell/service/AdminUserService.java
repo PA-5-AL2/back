@@ -26,6 +26,15 @@ public class AdminUserService extends UserService<AdminUser, UpdateAdminDTO> {
         return adminUserRepository.findById(id)
                 .map(admin -> {
                     if (dto.getFirstName() != null) admin.setFirstName(dto.getFirstName());
+                    if (dto.getUsername() != null) {
+                        if (adminUserRepository.findByUsername(dto.getUsername()) == null
+                                || adminUserRepository.findByUsername(dto.getUsername()).getUserId().equals(id)) {
+                            admin.setUsername(dto.getUsername());
+                        } else {
+                            throw new RuntimeException("Cet email est déjà utilisé par un autre utilisateur");
+                        }
+                    }
+
                     return adminUserRepository.save(admin);
                 });
     }
