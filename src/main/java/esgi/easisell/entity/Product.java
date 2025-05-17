@@ -10,7 +10,10 @@ import java.util.*;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "PRODUCT")
+@Table(name = "PRODUCT",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"client_id", "barcode"})
+        })
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -23,10 +26,10 @@ public class Product {
     @Lob
     private String description;
 
-    @Column(unique = true)
+    @Column(name = "barcode")
     private String barcode;
 
-    private String brand;
+    private String brand; // MARQUE : CACO...
 
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal unitPrice;
