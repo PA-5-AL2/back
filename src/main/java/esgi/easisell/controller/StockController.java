@@ -142,17 +142,6 @@ public class StockController {
         return ResponseEntity.ok(responseDTOs);
     }
 
-    @GetMapping("/client/{clientId}/category/{categoryId}")
-    public ResponseEntity<List<StockItemResponseDTO>> getStockItemsByClientAndCategory(
-            @PathVariable UUID clientId,
-            @PathVariable UUID categoryId) {
-        List<StockItem> stockItems = stockItemService.getStockItemsByClientAndCategory(clientId, categoryId);
-        List<StockItemResponseDTO> responseDTOs = stockItems.stream()
-                .map(this::convertToResponseDTO)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responseDTOs);
-    }
-
     private StockItemResponseDTO convertToResponseDTO(StockItem stockItem) {
         StockItemResponseDTO dto = new StockItemResponseDTO();
         dto.setStockItemId(stockItem.getStockItemId().toString());

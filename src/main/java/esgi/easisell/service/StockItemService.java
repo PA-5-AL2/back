@@ -168,8 +168,4 @@ public class StockItemService {
                 .map(product -> product.getBarcode() != null && !product.getBarcode().trim().isEmpty())
                 .orElse(false);
     }
-
-    public List<StockItem> getStockItemsByClientAndCategory(UUID clientId, UUID categoryId) {
-        return stockItemRepository.findByClientIdAndCategoryId(clientId, categoryId);
-    }
 }
