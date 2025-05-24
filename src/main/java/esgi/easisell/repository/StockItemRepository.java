@@ -35,4 +35,7 @@ public interface StockItemRepository extends JpaRepository<StockItem, UUID> {
 
     @Query("SELECT COUNT(s) FROM StockItem s WHERE s.client.userId = :clientId")
     long countByClientId(@Param("clientId") UUID clientId);
+
+    @Query("SELECT s FROM StockItem s WHERE s.client.userId = :clientId AND s.product.category.categoryId = :categoryId")
+    List<StockItem> findByClientIdAndCategoryId(@Param("clientId") UUID clientId, @Param("categoryId") UUID categoryId);
 }
