@@ -55,7 +55,7 @@ public class SupplierService {
     }
 
     @Transactional
-    public Optional<Supplier> updateSupplier(UUID id, SupplierDTO dto) {
+    public Optional<SupplierResponseDTO> updateSupplier(UUID id, SupplierDTO dto) {
         return supplierRepository.findById(id)
                 .map(supplier -> {
                     if (dto.getName() != null) supplier.setName(dto.getName());
@@ -63,7 +63,8 @@ public class SupplierService {
                     if (dto.getDescription() != null) supplier.setDescription(dto.getDescription());
                     if (dto.getContactInfo() != null) supplier.setContactInfo(dto.getContactInfo());
                     if (dto.getPhoneNumber() != null) supplier.setPhoneNumber(dto.getPhoneNumber());
-                    return supplierRepository.save(supplier);
+                    Supplier savedSupplier = supplierRepository.save(supplier);
+                    return new SupplierResponseDTO(savedSupplier); 
                 });
     }
 

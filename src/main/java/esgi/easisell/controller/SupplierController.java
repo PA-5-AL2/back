@@ -49,9 +49,9 @@ public class SupplierController {
     }
 
     @PutMapping("/suppliers/{id}")
-    public ResponseEntity<Supplier> updateSupplier(
-            @PathVariable UUID id,
-            @RequestBody SupplierDTO supplierDTO) {
+    public ResponseEntity<SupplierResponseDTO> updateSupplier( // ← Changez le type de retour
+                                                               @PathVariable UUID id,
+                                                               @RequestBody SupplierDTO supplierDTO) {
         return supplierService.updateSupplier(id, supplierDTO)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
