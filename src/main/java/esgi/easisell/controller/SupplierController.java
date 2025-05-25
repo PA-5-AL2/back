@@ -1,6 +1,7 @@
 package esgi.easisell.controller;
 
 import esgi.easisell.dto.SupplierDTO;
+import esgi.easisell.dto.SupplierResponseDTO;
 import esgi.easisell.entity.Supplier;
 import esgi.easisell.service.SupplierService;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +12,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
@@ -20,7 +22,7 @@ public class SupplierController {
     private final SupplierService supplierService;
 
     @GetMapping("/clients/{clientId}/suppliers")
-    public ResponseEntity<List<Supplier>> getSuppliersByClientId(@PathVariable UUID clientId) {
+    public ResponseEntity<List<SupplierResponseDTO>> getSuppliersByClientId(@PathVariable UUID clientId) {
         return ResponseEntity.ok(supplierService.getSuppliersByClientId(clientId));
     }
 

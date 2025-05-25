@@ -1,6 +1,7 @@
 package esgi.easisell.service;
 
 import esgi.easisell.dto.SupplierDTO;
+import esgi.easisell.dto.SupplierResponseDTO;
 import esgi.easisell.entity.Client;
 import esgi.easisell.entity.Supplier;
 import esgi.easisell.repository.ClientRepository;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,8 +27,11 @@ public class SupplierService {
         return supplierRepository.findAll();
     }
 
-    public List<Supplier> getSuppliersByClientId(UUID clientId) {
-        return supplierRepository.findByClientUserId(clientId);
+    public List<SupplierResponseDTO> getSuppliersByClientId(UUID clientId) {
+        return supplierRepository.findByClientUserId(clientId)
+                .stream()
+                .map(SupplierResponseDTO::new)
+                .collect(Collectors.toList());
     }
 
     public Optional<Supplier> getSupplierById(UUID id) {
