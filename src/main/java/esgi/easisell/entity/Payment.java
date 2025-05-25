@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.util.UUID;
 
 @Data
@@ -25,6 +26,9 @@ public class Payment {
 
     @Column(nullable = false)
     private String currency;
+
+    @Column(nullable = false)
+    private Timestamp paymentDate; // Ajout recommandé
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sale_id", nullable = false)

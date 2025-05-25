@@ -27,17 +27,29 @@ public class Client extends User {
 
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
-    private List<EmailSend> emailSends;
+    private List<EmailSend> emailSends = new ArrayList<>();
 
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
-    private List<Supplier> suppliers;
+    private List<Supplier> suppliers = new ArrayList<>();
 
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
-    private List<Product> products;
+    private List<Category> categories = new ArrayList<>(); // MANQUANT
 
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
-    private List<Sale> sales;
+    private List<Product> products = new ArrayList<>();
+
+    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    private List<StockItem> stockItems = new ArrayList<>(); // MANQUANT
+
+    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    private List<Sale> sales = new ArrayList<>();
+
+    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    private List<Promotion> promotions = new ArrayList<>(); // MANQUANT
 }

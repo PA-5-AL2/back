@@ -28,10 +28,11 @@ public class Email {
     @Column(nullable = false)
     private String type;
 
+    @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private Timestamp createdAt;
 
     @OneToMany(mappedBy = "email", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
-    private List<EmailSend> emailSends;
+    private List<EmailSend> emailSends = new ArrayList<>();
 }

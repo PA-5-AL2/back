@@ -1,6 +1,7 @@
 package esgi.easisell.controller;
 
 import esgi.easisell.dto.CategoryDTO;
+import esgi.easisell.dto.CategoryResponseDTO;
 import esgi.easisell.entity.Category;
 import esgi.easisell.service.CategoryService;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +12,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/categories")
@@ -28,7 +31,7 @@ public class CategoryController {
     public ResponseEntity<?> createCategory(@RequestBody CategoryDTO categoryDTO) {
         try {
             Category category = categoryService.createCategory(categoryDTO);
-            return ResponseEntity.ok(category);
+            return ResponseEntity.ok(convertToResponseDTO(category));
         } catch (Exception e) {
             log.error("Erreur lors de la création de la catégorie", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -40,16 +43,22 @@ public class CategoryController {
      * Récupérer toutes les catégories
      */
     @GetMapping
-    public ResponseEntity<List<Category>> getAllCategories() {
-        return ResponseEntity.ok(categoryService.getAllCategories());
+    public ResponseEntity<List<CategoryResponseDTO>> getAllCategories() {
+        List<CategoryResponseDTO> categories = categoryService.getAllCategories().stream()
+                .map(this::convertToResponseDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(categories);
     }
 
     /**
      * Récupérer les catégories d'un client spécifique
      */
     @GetMapping("/client/{clientId}")
-    public ResponseEntity<List<Category>> getCategoriesByClient(@PathVariable UUID clientId) {
-        return ResponseEntity.ok(categoryService.getCategoriesByClient(clientId));
+    public ResponseEntity<List<CategoryResponseDTO>> getCategoriesByClient(@PathVariable UUID clientId) {
+        List<CategoryResponseDTO> categories = categoryService.getCategoriesByClient(clientId).stream()
+                .map(this::convertToResponseDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(categories);
     }
 
     /**
@@ -58,7 +67,7 @@ public class CategoryController {
     @GetMapping("/{categoryId}")
     public ResponseEntity<?> getCategoryById(@PathVariable UUID categoryId) {
         return categoryService.getCategoryById(categoryId)
-                .map(ResponseEntity::ok)
+                .map(category -> ResponseEntity.ok(convertToResponseDTO(category)))
                 .orElse(ResponseEntity.notFound().build());
     }
 
@@ -70,7 +79,7 @@ public class CategoryController {
                                             @RequestBody CategoryDTO categoryDTO) {
         try {
             return categoryService.updateCategory(categoryId, categoryDTO)
-                    .map(ResponseEntity::ok)
+                    .map(category -> ResponseEntity.ok(convertToResponseDTO(category)))
                     .orElse(ResponseEntity.notFound().build());
         } catch (Exception e) {
             log.error("Erreur lors de la mise à jour de la catégorie", e);
@@ -96,20 +105,58 @@ public class CategoryController {
      * Rechercher des catégories par nom
      */
     @GetMapping("/search")
-    public ResponseEntity<List<Category>> searchCategoriesByName(
+    public ResponseEntity<List<CategoryResponseDTO>> searchCategoriesByName(
             @RequestParam UUID clientId,
             @RequestParam String name) {
-        return ResponseEntity.ok(categoryService.searchCategoriesByName(clientId, name));
+        List<CategoryResponseDTO> categories = categoryService.searchCategoriesByName(clientId, name).stream()
+                .map(this::convertToResponseDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(categories);
     }
 
     /**
-     * Vérifier si une catégorie appartient à un client
+     * Mettre à jour partiellement une catégorie (PATCH)
      */
-    @GetMapping("/verify-ownership")
-    public ResponseEntity<Map<String, Boolean>> verifyCategoryOwnership(
-            @RequestParam UUID categoryId,
-            @RequestParam UUID clientId) {
-        boolean isOwned = categoryService.isCategoryOwnedByClient(categoryId, clientId);
-        return ResponseEntity.ok(Map.of("isOwned", isOwned));
+    @PatchMapping("/{categoryId}")
+    public ResponseEntity<?> patchCategory(@PathVariable UUID categoryId,
+                                           @RequestBody Map<String, String> updates) {
+        try {
+            Optional<Category> categoryOpt = categoryService.getCategoryById(categoryId);
+            if (categoryOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Category category = categoryOpt.get();
+
+            // Appliquer seulement les champs fournis
+            if (updates.containsKey("name")) {
+                CategoryDTO dto = new CategoryDTO();
+                dto.setName(updates.get("name"));
+                dto.setClientId(category.getClient().getUserId().toString());
+
+                return categoryService.updateCategory(categoryId, dto)
+                        .map(cat -> ResponseEntity.ok(convertToResponseDTO(cat)))
+                        .orElse(ResponseEntity.notFound().build());
+            }
+
+            return ResponseEntity.ok(convertToResponseDTO(category));
+        } catch (Exception e) {
+            log.error("Erreur lors de la mise à jour partielle de la catégorie", e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Convertir une entité Category en DTO
+     */
+    private CategoryResponseDTO convertToResponseDTO(Category category) {
+        CategoryResponseDTO dto = new CategoryResponseDTO();
+        dto.setCategoryId(category.getCategoryId());
+        dto.setName(category.getName());
+        dto.setClientId(category.getClient().getUserId());
+        dto.setClientName(category.getClient().getName());
+        dto.setProductCount(category.getProducts() != null ? category.getProducts().size() : 0);
+        return dto;
     }
 }
