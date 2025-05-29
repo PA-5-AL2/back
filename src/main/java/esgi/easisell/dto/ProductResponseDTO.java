@@ -1,15 +1,10 @@
 package esgi.easisell.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.math.BigDecimal;
 import java.util.UUID;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class ProductResponseDTO {
     private UUID productId;
     private String name;
@@ -18,15 +13,34 @@ public class ProductResponseDTO {
     private String brand;
     private BigDecimal unitPrice;
 
-    // Informations de la catégorie
+    // Informations de la catégorie (aplaties)
     private UUID categoryId;
     private String categoryName;
 
-    // Informations du client
+    // Informations du client (aplaties)
     private UUID clientId;
-    private String clientName;
+    private String clientUsername;
+    private String clientFirstName;
 
-    // Informations calculées
-    private int stockQuantityTotal;
-    private boolean hasActivePromotion;
+    public ProductResponseDTO(esgi.easisell.entity.Product product) {
+        this.productId = product.getProductId();
+        this.name = product.getName();
+        this.description = product.getDescription();
+        this.barcode = product.getBarcode();
+        this.brand = product.getBrand();
+        this.unitPrice = product.getUnitPrice();
+
+        // Aplatir la catégorie
+        if (product.getCategory() != null) {
+            this.categoryId = product.getCategory().getCategoryId();
+            this.categoryName = product.getCategory().getName();
+        }
+
+        // Aplatir le client
+        if (product.getClient() != null) {
+            this.clientId = product.getClient().getUserId();
+            this.clientUsername = product.getClient().getUsername();
+            this.clientFirstName = product.getClient().getFirstName();
+        }
+    }
 }

@@ -9,6 +9,7 @@ import esgi.easisell.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -29,12 +30,18 @@ public class AuthService {
     private final JwtUtils jwtUtils;
     private final AuthenticationManager authenticationManager;
 
+    /**
+     * Vérifie si un nom d'utilisateur est disponible
+     */
     public boolean isUsernameAvailable(String username) {
         return userRepository.findByUsername(username) == null;
     }
 
+    /**
+     * Enregistre un nouvel utilisateur (Client ou Admin)
+     */
     @Transactional
-    public User registerUser(AuthDTO authDTO) throws Exception {
+    public User registerUser(AuthDTO authDTO) {
         User user;
 
         if ("administrateur".equalsIgnoreCase(authDTO.getRole()) || "admin".equalsIgnoreCase(authDTO.getRole())) {
@@ -55,28 +62,56 @@ public class AuthService {
 
         user.setUsername(authDTO.getUsername());
         user.setPassword(passwordEncoder.encode(authDTO.getPassword()));
-        user.setFirstName(authDTO.getUsername().split("@")[0]); // Exemple de génération de firstName
+        user.setFirstName(authDTO.getUsername().split("@")[0]);
 
         return userRepository.save(user);
     }
 
-    public Map<String, Object> authenticateUser(AuthDTO authDTO) throws AuthenticationException {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(authDTO.getUsername(), authDTO.getPassword())
-        );
+    /**
+     * Authentifie un utilisateur et retourne un token JWT
+     */
+    public Map<String, Object> authenticateUser(AuthDTO authDTO) {
+        log.info("Tentative d'authentification pour: {}", authDTO.getUsername());
 
-        if (authentication.isAuthenticated()) {
-            User user = userRepository.findByUsername(authDTO.getUsername());
-
-            Map<String, Object> authData = new HashMap<>();
-            authData.put("token", jwtUtils.generateToken(authDTO.getUsername()));
-            authData.put("type", "Bearer");
-            authData.put("role", user.getRole());
-            authData.put("userId", user.getUserId());
-
-            return authData;
+        User user = userRepository.findByUsername(authDTO.getUsername());
+        if (user == null) {
+            log.warn("Utilisateur non trouvé: {}", authDTO.getUsername());
+            throw new BadCredentialsException("Utilisateur non trouvé");
         }
 
-        throw new AuthenticationException("Authentication failed") {};
+        if (!passwordEncoder.matches(authDTO.getPassword(), user.getPassword())) {
+            log.warn("Mot de passe incorrect pour: {}", authDTO.getUsername());
+            throw new BadCredentialsException("Mot de passe incorrect");
+        }
+
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(authDTO.getUsername(), authDTO.getPassword())
+            );
+
+            if (!authentication.isAuthenticated()) {
+                throw new BadCredentialsException("Échec de l'authentification");
+            }
+        } catch (AuthenticationException e) {
+            log.error("Erreur d'authentification pour {}: {}", authDTO.getUsername(), e.getMessage());
+            throw new BadCredentialsException("Les identifications sont erronées");
+        }
+
+        log.info("Utilisateur authentifié: {} avec le rôle: {}", user.getUsername(), user.getRole());
+
+        String token = jwtUtils.generateToken(
+                user.getUsername(),
+                user.getRole(),
+                user.getUserId().toString()
+        );
+
+        Map<String, Object> authData = new HashMap<>();
+        authData.put("token", token);
+        authData.put("type", "Bearer");
+        authData.put("role", user.getRole());
+        authData.put("userId", user.getUserId());
+
+        log.info("Token généré avec succès pour: {}", user.getUsername());
+        return authData;
     }
 }
