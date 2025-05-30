@@ -1,5 +1,6 @@
 package esgi.easisell.controller;
 
+import esgi.easisell.dto.ClientResponseDTO;
 import esgi.easisell.dto.UpdateAdminDTO;
 import esgi.easisell.dto.UpdateClientDTO;
 import esgi.easisell.entity.AdminUser;
@@ -76,4 +77,29 @@ public class UserController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+
+    private ClientResponseDTO convertToDTO(Client client) {
+        ClientResponseDTO dto = new ClientResponseDTO();
+        dto.setUserId(client.getUserId());
+        dto.setUsername(client.getUsername());
+        dto.setFirstName(client.getFirstName());
+        dto.setRole(client.getRole());
+        dto.setCreatedAt(client.getCreatedAt());
+        dto.setName(client.getName());
+        dto.setAddress(client.getAddress());
+        dto.setContractStatus(client.getContractStatus());
+        dto.setCurrencyPreference(client.getCurrencyPreference());
+
+        if (client.getAdminUser() != null) {
+            dto.setAdminUserId(client.getAdminUser().getUserId());
+            dto.setAdminUserName(client.getAdminUser().getFirstName());
+        }
+
+        dto.setTotalProducts(client.getProducts() != null ? client.getProducts().size() : 0);
+        dto.setTotalSuppliers(client.getSuppliers() != null ? client.getSuppliers().size() : 0);
+        dto.setTotalCategories(client.getCategories() != null ? client.getCategories().size() : 0);
+
+        return dto;
+    }
+
 }
