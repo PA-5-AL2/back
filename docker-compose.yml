@@ -1,5 +1,8 @@
+name: easysell
+
 services:
   app:
+    container_name: easysell-app
     build: .
     ports:
       - "8081:8081"
@@ -13,13 +16,12 @@ services:
     restart: unless-stopped
 
   db:
+    container_name: easysell-db
     image: mysql:8.0
     command: --default-authentication-plugin=mysql_native_password
     environment:
       - MYSQL_DATABASE=EasySell
       - MYSQL_ALLOW_EMPTY_PASSWORD=yes
-    ports:
-      - "3306:3306"
     volumes:
       - db-data:/var/lib/mysql
     healthcheck:
