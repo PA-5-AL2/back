@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/users")
@@ -23,13 +24,20 @@ public class UserController {
     private final AdminUserService adminUserService;
 
     @GetMapping("/clients")
-    public ResponseEntity<List<Client>> getAllClients() {
-        return ResponseEntity.ok(clientService.getAllUsers());
+    public ResponseEntity<List<ClientResponseDTO>> getAllClients() {
+        List<Client> clients = clientService.getAllUsers();
+
+        List<ClientResponseDTO> clientDTOs = clients.stream()
+                .map(ClientResponseDTO::new)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(clientDTOs);
     }
 
     @GetMapping("/clients/{id}")
-    public ResponseEntity<Client> getClientById(@PathVariable UUID id) {
+    public ResponseEntity<ClientResponseDTO> getClientById(@PathVariable UUID id) {
         return clientService.getUserById(id)
+                .map(ClientResponseDTO::new)  // Conversion en DTO
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -65,8 +73,9 @@ public class UserController {
     }
 
     @PutMapping("/clients/{id}")
-    public ResponseEntity<Client> updateClient(@PathVariable UUID id, @RequestBody UpdateClientDTO dto) {
+    public ResponseEntity<ClientResponseDTO> updateClient(@PathVariable UUID id, @RequestBody UpdateClientDTO dto) {
         return clientService.updateUser(id, dto)
+                .map(ClientResponseDTO::new)  // Conversion en DTO
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -77,29 +86,4 @@ public class UserController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
-
-    private ClientResponseDTO convertToDTO(Client client) {
-        ClientResponseDTO dto = new ClientResponseDTO();
-        dto.setUserId(client.getUserId());
-        dto.setUsername(client.getUsername());
-        dto.setFirstName(client.getFirstName());
-        dto.setRole(client.getRole());
-        dto.setCreatedAt(client.getCreatedAt());
-        dto.setName(client.getName());
-        dto.setAddress(client.getAddress());
-        dto.setContractStatus(client.getContractStatus());
-        dto.setCurrencyPreference(client.getCurrencyPreference());
-
-        if (client.getAdminUser() != null) {
-            dto.setAdminUserId(client.getAdminUser().getUserId());
-            dto.setAdminUserName(client.getAdminUser().getFirstName());
-        }
-
-        dto.setTotalProducts(client.getProducts() != null ? client.getProducts().size() : 0);
-        dto.setTotalSuppliers(client.getSuppliers() != null ? client.getSuppliers().size() : 0);
-        dto.setTotalCategories(client.getCategories() != null ? client.getCategories().size() : 0);
-
-        return dto;
-    }
-
 }

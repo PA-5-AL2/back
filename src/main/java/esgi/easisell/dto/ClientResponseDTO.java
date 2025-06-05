@@ -1,8 +1,9 @@
 package esgi.easisell.dto;
 
+import esgi.easisell.entity.Client;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -25,7 +26,22 @@ public class ClientResponseDTO {
     private UUID adminUserId;
     private String adminUserName;
 
-    private int totalProducts;
-    private int totalSuppliers;
-    private int totalCategories;
+    public ClientResponseDTO(Client client) {
+        this.userId = client.getUserId();
+        this.username = client.getUsername();
+        this.firstName = client.getFirstName();
+        this.role = client.getRole().toString();
+        this.createdAt = client.getCreatedAt();
+
+        this.name = client.getName();
+        this.address = client.getAddress();
+        this.contractStatus = client.getContractStatus();
+        this.currencyPreference = client.getCurrencyPreference();
+
+        if (client.getAdminUser() != null) {
+            this.adminUserId = client.getAdminUser().getUserId();
+            this.adminUserName = client.getAdminUser().getFirstName();
+        }
+
+    }
 }
