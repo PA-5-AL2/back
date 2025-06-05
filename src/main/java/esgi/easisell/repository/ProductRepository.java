@@ -12,12 +12,7 @@ import java.util.UUID;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, UUID> {
 
-    // OPTION 1: Via l'objet Client (recommandé)
     List<Product> findByClientUserId(UUID clientId);
-
-    // OPTION 2: Via requête JPQL (alternative)
-    // @Query("SELECT p FROM Product p WHERE p.client.userId = :clientId")
-    // List<Product> findByClientUserId(@Param("clientId") UUID clientId);
 
     List<Product> findByCategoryCategoryId(UUID categoryId);
 

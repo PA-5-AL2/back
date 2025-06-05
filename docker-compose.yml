@@ -22,6 +22,8 @@ services:
     environment:
       - MYSQL_DATABASE=EasySell
       - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+    ports:
+      - "3307:3306"
     volumes:
       - db-data:/var/lib/mysql
     healthcheck:
