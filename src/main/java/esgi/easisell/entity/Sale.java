@@ -9,6 +9,7 @@ import java.util.*;
 
 @Data
 @Entity
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "SALE")

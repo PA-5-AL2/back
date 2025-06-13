@@ -109,24 +109,42 @@ public class StockItemService {
     }
 
     @Transactional
-    public boolean adjustStockQuantity(UUID stockItemId, int quantityChange) {
-        log.info("Ajustement de la quantité pour l'item de stock ID: {} de {}", stockItemId, quantityChange);
+    public boolean adjustStockQuantity(UUID productId, int quantityChange) {
+        log.info("Ajustement du stock pour le produit: {} de {}", productId, quantityChange);
 
-        Optional<StockItem> stockItemOpt = stockItemRepository.findById(stockItemId);
-        if (stockItemOpt.isPresent()) {
-            StockItem stockItem = stockItemOpt.get();
-            int newQuantity = stockItem.getQuantity() + quantityChange;
+        // Récupérer tous les items de stock pour ce produit
+        List<StockItem> stockItems = stockItemRepository.findByProductProductId(productId);
 
-            if (newQuantity < 0) {
-                log.error("Quantité insuffisante en stock pour l'item ID: {}", stockItemId);
-                return false;
+        if (stockItems.isEmpty()) {
+            log.error("Aucun stock trouvé pour le produit: {}", productId);
+            return false;
+        }
+
+        int remainingToDecrease = Math.abs(quantityChange);
+
+        // Si on diminue le stock
+        if (quantityChange < 0) {
+            for (StockItem item : stockItems) {
+                if (remainingToDecrease <= 0) break;
+
+                if (item.getQuantity() > 0) {
+                    int toDecrease = Math.min(item.getQuantity(), remainingToDecrease);
+                    item.setQuantity(item.getQuantity() - toDecrease);
+                    stockItemRepository.save(item);
+                    remainingToDecrease -= toDecrease;
+                }
             }
 
-            stockItem.setQuantity(newQuantity);
-            stockItemRepository.save(stockItem);
+            return remainingToDecrease == 0;
+        }
+        // Si on augmente le stock
+        else {
+            // Ajouter au premier item trouvé
+            StockItem firstItem = stockItems.get(0);
+            firstItem.setQuantity(firstItem.getQuantity() + quantityChange);
+            stockItemRepository.save(firstItem);
             return true;
         }
-        return false;
     }
 
     @Transactional

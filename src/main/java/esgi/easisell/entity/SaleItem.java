@@ -8,6 +8,9 @@ import java.util.UUID;
 
 @Data
 @Entity
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "SALE_ITEM")
 public class SaleItem {
     @Id
