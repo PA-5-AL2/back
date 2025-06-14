@@ -53,17 +53,16 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
         Client client = clientRepository.findById(clientId)
                 .orElseThrow(() -> new ClientNotFoundException(clientId));
 
-        Sale sale = Sale.builder()
-                .client(client)
-                .saleTimestamp(Timestamp.valueOf(LocalDateTime.now()))
-                .totalAmount(BigDecimal.ZERO)
-                .isDeferred(false)
-                .saleItems(new ArrayList<>())
-                .payments(new ArrayList<>())
-                .build();
+        // ✅ Construction manuelle garantie de fonctionner
+        Sale sale = new Sale();
+        sale.setClient(client);
+        sale.setSaleTimestamp(Timestamp.valueOf(LocalDateTime.now()));
+        sale.setTotalAmount(BigDecimal.ZERO);
+        sale.setIsDeferred(false);
+        sale.setSaleItems(new ArrayList<>());
+        sale.setPayments(new ArrayList<>());
 
         Sale savedSale = saleRepository.save(sale);
-
         return SaleMapper.toResponseDTO(savedSale);
     }
 

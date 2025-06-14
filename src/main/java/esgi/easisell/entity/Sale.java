@@ -9,7 +9,6 @@ import java.util.*;
 
 @Data
 @Entity
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "SALE")
@@ -35,9 +34,19 @@ public class Sale {
 
     @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
-    private List<SaleItem> saleItems;
+    private List<SaleItem> saleItems = new ArrayList<>();
 
     @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
-    private List<Payment> payments;
+    private List<Payment> payments = new ArrayList<>();
+
+    // Constructeur personnalisé pour éviter les problèmes
+    public Sale(Client client, Timestamp saleTimestamp, BigDecimal totalAmount, Boolean isDeferred) {
+        this.client = client;
+        this.saleTimestamp = saleTimestamp;
+        this.totalAmount = totalAmount;
+        this.isDeferred = isDeferred;
+        this.saleItems = new ArrayList<>();
+        this.payments = new ArrayList<>();
+    }
 }
