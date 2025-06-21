@@ -1,0 +1,75 @@
+flowchart TD
+%% Authentification
+    START([🔐 Connexion Utilisateur]) --> VALIDATE{🔍 Validation JWT}
+
+%% Routes selon le rôle
+VALIDATE -->|ADMIN| ADMIN[👑 Dashboard Admin]
+VALIDATE -->|CLIENT| CLIENT[🏪 Dashboard Client]
+
+%% Dashboard Admin
+ADMIN --> MANAGE_USERS[👥 Gestion Utilisateurs]
+ADMIN --> SYSTEM_MONITOR[📊 Supervision Système]
+
+%% Dashboard Client - Modules principaux
+CLIENT --> PRODUCTS[📦 Gestion Produits]
+CLIENT --> STOCK[📋 Gestion Stock]
+CLIENT --> NEW_SALE[🛒 Nouvelle Vente]
+CLIENT --> REPORTS[📈 Rapports & Analytics]
+CLIENT --> EMAILS[📧 Emails Clients]
+
+%% Gestion Produits
+PRODUCTS --> PROD_CRUD[CRUD Produits & Catégories]
+
+%% Gestion Stock
+STOCK --> STOCK_CRUD[CRUD Stock Items]
+STOCK --> SUPPLIERS[🚚 Gestion Fournisseurs]
+STOCK --> ALERTS[⚠️ Alertes Stock/Expiration]
+
+%% Processus de Vente Principal
+NEW_SALE --> SCAN[📱 Scan Code-Barres]
+SCAN --> STOCK_CHECK{📊 Vérification Stock}
+
+STOCK_CHECK -->|Stock OK| CALC[💰 Calcul Total]
+STOCK_CHECK -->|Stock Insuffisant| SCAN
+
+CALC --> PAYMENT[💳 Traitement Paiement]
+PAYMENT --> UPDATE_STOCK[📉 Mise à Jour Stock]
+UPDATE_STOCK --> RECEIPT[🧾 Génération Ticket]
+RECEIPT --> SALE_EVENT[✅ Vente Finalisée]
+
+%% Services Email
+EMAILS --> EMAIL_REMINDER[📮 Rappels Paiement]
+EMAILS --> EMAIL_CANCEL[📮 Confirmations Résiliation]
+EMAILS --> EMAIL_REGISTER[📮 Pré-inscriptions]
+
+%% Rapports
+REPORTS --> DAILY_SALES[📊 Ventes du Jour]
+REPORTS --> HISTORY[📜 Historique Ventes]
+REPORTS --> TOP_PRODUCTS[🏆 Produits Populaires]
+
+%% Fin de session
+SALE_EVENT --> END([🔚 Fin de Session])
+MANAGE_USERS --> END
+SYSTEM_MONITOR --> END
+PROD_CRUD --> CLIENT
+STOCK_CRUD --> CLIENT
+SUPPLIERS --> CLIENT
+ALERTS --> CLIENT
+EMAIL_REMINDER --> CLIENT
+EMAIL_CANCEL --> CLIENT
+EMAIL_REGISTER --> CLIENT
+DAILY_SALES --> CLIENT
+HISTORY --> CLIENT
+TOP_PRODUCTS --> CLIENT
+
+%% Styles des groupes
+classDef authGroup fill:#ff6b6b,stroke:#fff,stroke-width:2px,color:#fff
+classDef mgmtGroup fill:#4ecdc4,stroke:#fff,stroke-width:2px,color:#fff
+classDef salesGroup fill:#45b7d1,stroke:#fff,stroke-width:2px,color:#fff
+classDef servicesGroup fill:#96ceb4,stroke:#fff,stroke-width:2px,color:#fff
+
+%% Application des styles
+class START,VALIDATE authGroup
+class ADMIN,CLIENT,PRODUCTS,STOCK,PROD_CRUD,STOCK_CRUD,SUPPLIERS,ALERTS mgmtGroup
+class NEW_SALE,SCAN,STOCK_CHECK,CALC,PAYMENT,UPDATE_STOCK,RECEIPT,SALE_EVENT salesGroup
+class EMAILS,REPORTS,EMAIL_REMINDER,EMAIL_CANCEL,EMAIL_REGISTER,DAILY_SALES,HISTORY,TOP_PRODUCTS servicesGroup

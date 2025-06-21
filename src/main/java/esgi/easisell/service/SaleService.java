@@ -13,6 +13,7 @@ import esgi.easisell.service.payment.PaymentProcessorFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,7 +26,6 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-// SERVICE PRINCIPAL - Open/Closed Principle (extensible sans modification)
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -37,9 +37,10 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
     private final ProductRepository productRepository;
     private final ClientRepository clientRepository;
 
-    // Dependency Inversion - dépend d'abstractions
-    private final IStockValidationService stockValidationService;
-    private final IStockUpdateService stockUpdateService;
+    // ✅ NOUVEAU : Service de gestion optimiste du stock
+    private final OptimisticStockService optimisticStockService;
+
+    // Services existants conservés
     private final ISaleValidationService saleValidationService;
     private final ISalePriceCalculator priceCalculator;
     private final ApplicationEventPublisher eventPublisher;
@@ -48,12 +49,11 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
     @Override
     @Transactional
     public SaleResponseDTO createNewSale(UUID clientId) {
-        log.info("Création d'une nouvelle vente pour le client: {}", clientId);
+        log.info("🛒 Création d'une nouvelle vente pour le client: {}", clientId);
 
         Client client = clientRepository.findById(clientId)
                 .orElseThrow(() -> new ClientNotFoundException(clientId));
 
-        // ✅ Construction manuelle garantie de fonctionner
         Sale sale = new Sale();
         sale.setClient(client);
         sale.setSaleTimestamp(Timestamp.valueOf(LocalDateTime.now()));
@@ -63,14 +63,16 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
         sale.setPayments(new ArrayList<>());
 
         Sale savedSale = saleRepository.save(sale);
+        log.info("✅ Vente créée avec l'ID: {}", savedSale.getSaleId());
+
         return SaleMapper.toResponseDTO(savedSale);
     }
 
-    // ========== GESTION DES ARTICLES ==========
+    // ========== GESTION DES ARTICLES AVEC VALIDATION DE STOCK ==========
     @Override
     @Transactional
     public SaleItemResponseDTO addProductToSale(UUID saleId, String barcode, int quantity) {
-        log.info("Scan du produit {} pour la vente {}", barcode, saleId);
+        log.info("🔍 Scan du produit {} (quantité: {}) pour la vente {}", barcode, quantity, saleId);
 
         Sale sale = findSaleOrThrow(saleId);
         saleValidationService.validateSaleNotFinalized(sale);
@@ -88,7 +90,7 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
     @Override
     @Transactional
     public SaleItemResponseDTO addProductByIdToSale(UUID saleId, UUID productId, int quantity) {
-        log.info("Ajout manuel du produit {} à la vente {}", productId, saleId);
+        log.info("➕ Ajout manuel du produit {} (quantité: {}) à la vente {}", productId, quantity, saleId);
 
         Sale sale = findSaleOrThrow(saleId);
         saleValidationService.validateSaleNotFinalized(sale);
@@ -112,11 +114,9 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
                 .orElseThrow(() -> new SaleItemNotFoundException(saleItemId));
 
         saleValidationService.validateSaleNotFinalized(saleItem.getSale());
-        stockValidationService.validateStockAvailable(
-                saleItem.getProduct(),
-                saleItem.getSale().getClient().getUserId(),
-                newQuantity
-        );
+
+        // ✅ VALIDATION AVEC LE SERVICE OPTIMISTE
+        validateStockAvailability(saleItem.getProduct(), saleItem.getSale().getClient().getUserId(), newQuantity);
 
         saleItem.setQuantitySold(newQuantity);
         saleItem.setPriceAtSale(priceCalculator.calculateItemPrice(
@@ -143,18 +143,27 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
         updateSaleTotal(sale);
     }
 
-    // ========== PAIEMENT ==========
+    // ========== PAIEMENT AVEC GESTION OPTIMISTE ==========
     @Override
     @Transactional
     public PaymentResultDTO processPayment(UUID saleId, String paymentType,
                                            BigDecimal amountReceived, String currency) {
-        log.info("Traitement du paiement pour la vente: {}", saleId);
+        log.info("💳 Traitement du paiement pour la vente: {} - Type: {}, Montant: {}",
+                saleId, paymentType, amountReceived);
 
         Sale sale = findSaleOrThrow(saleId);
         saleValidationService.validateSaleNotFinalized(sale);
 
         if (sale.getSaleItems().isEmpty()) {
             throw new EmptySaleException("Impossible de finaliser une vente vide");
+        }
+
+        // ✅ VALIDATION FINALE DU STOCK AVANT PAIEMENT
+        try {
+            optimisticStockService.validateStockBeforeSale(sale);
+        } catch (InsufficientStockException e) {
+            log.error("❌ Stock insuffisant lors de la finalisation: {}", e.getMessage());
+            throw new PaymentFailedException("Stock insuffisant: " + e.getMessage());
         }
 
         PaymentProcessor paymentProcessor = PaymentProcessorFactory.create(paymentType);
@@ -177,12 +186,22 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
         paymentRepository.save(payment);
         sale.getPayments().add(payment);
 
-        // Mettre à jour le stock
-        stockUpdateService.decreaseStockForSale(sale);
+        // ✅ MISE À JOUR DU STOCK AVEC GESTION OPTIMISTE
+        try {
+            optimisticStockService.decreaseStockForSale(sale);
+            log.info("✅ Stock décrémenté avec succès pour la vente: {}", saleId);
+        } catch (OptimisticLockingFailureException e) {
+            log.error("⚠️ Conflit de concurrence lors de la mise à jour du stock pour la vente: {}", saleId);
+            throw new PaymentFailedException("Conflit de stock détecté. Veuillez réessayer.");
+        } catch (Exception e) {
+            log.error("❌ Erreur lors de la mise à jour du stock: {}", e.getMessage());
+            throw new PaymentFailedException("Erreur lors de la mise à jour du stock: " + e.getMessage());
+        }
 
         // Publier l'événement
         eventPublisher.publishEvent(new SaleCompletedEvent(sale));
 
+        log.info("🎉 Paiement finalisé avec succès pour la vente: {}", saleId);
         return PaymentResultMapper.toDTO(result, sale);
     }
 
@@ -227,25 +246,78 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
         return ReceiptGenerator.generate(sale);
     }
 
-    // ========== MÉTHODE MANQUANTE ==========
+    // ========== MÉTHODES SPÉCIFIQUES À LA GESTION MULTI-CAISSES ==========
+
+    /**
+     * ✅ VÉRIFICATION DE DISPONIBILITÉ EN TEMPS RÉEL
+     */
+    @Transactional(readOnly = true)
+    public boolean checkProductAvailability(UUID productId, UUID clientId, int requestedQuantity) {
+        return optimisticStockService.isStockSufficient(productId, clientId, requestedQuantity);
+    }
+
+    /**
+     * ✅ RÉSERVATION TEMPORAIRE DE STOCK
+     */
+    @Transactional
+    public boolean reserveStockForSale(UUID saleId) {
+        Sale sale = findSaleOrThrow(saleId);
+
+        try {
+            for (SaleItem saleItem : sale.getSaleItems()) {
+                if (!optimisticStockService.reserveStock(
+                        saleItem.getProduct().getProductId(),
+                        sale.getClient().getUserId(),
+                        saleItem.getQuantitySold())) {
+                    return false;
+                }
+            }
+            return true;
+        } catch (Exception e) {
+            log.error("❌ Erreur lors de la réservation de stock pour la vente: {}", saleId, e);
+            return false;
+        }
+    }
+
+    /**
+     * ✅ SYNCHRONISATION DU STOCK EN TEMPS RÉEL
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> getRealtimeStockInfo(UUID productId, UUID clientId) {
+        int currentStock = optimisticStockService.getTotalStockQuantity(productId, clientId);
+
+        Map<String, Object> stockInfo = new HashMap<>();
+        stockInfo.put("productId", productId);
+        stockInfo.put("currentStock", currentStock);
+        stockInfo.put("available", currentStock > 0);
+        stockInfo.put("lastUpdated", System.currentTimeMillis());
+
+        return stockInfo;
+    }
+
+    // ========== MÉTHODES EXISTANTES CONSERVÉES ==========
+
     public BigDecimal getTodayTotalSales(UUID clientId) {
         return saleRepository.getTodayTotalSales(clientId);
     }
 
-    // ========== MÉTHODE POUR LE CONTROLLER ==========
     public boolean canAccessSale(UUID saleId, UUID userId) {
         return saleValidationService.canAccessSale(saleId, userId);
     }
 
     // ========== MÉTHODES PRIVÉES ==========
+
     private Sale findSaleOrThrow(UUID saleId) {
         return saleRepository.findById(saleId)
                 .orElseThrow(() -> new SaleNotFoundException(saleId));
     }
 
+    /**
+     * ✅ AJOUT DE PRODUIT AVEC VALIDATION OPTIMISTE
+     */
     private SaleItemResponseDTO addProductInternal(Sale sale, Product product, int quantity) {
-        stockValidationService.validateStockAvailable(
-                product, sale.getClient().getUserId(), quantity);
+        // 1. Validation immédiate du stock disponible
+        validateStockAvailability(product, sale.getClient().getUserId(), quantity);
 
         Optional<SaleItem> existingItem = findExistingItem(sale, product);
 
@@ -256,16 +328,32 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
         }
     }
 
+    /**
+     * ✅ VALIDATION DE STOCK AVEC SERVICE OPTIMISTE
+     */
+    private void validateStockAvailability(Product product, UUID clientId, int requestedQuantity) {
+        if (!optimisticStockService.isStockSufficient(product.getProductId(), clientId, requestedQuantity)) {
+            int availableStock = optimisticStockService.getTotalStockQuantity(product.getProductId(), clientId);
+            throw new InsufficientStockException(
+                    String.format("Stock insuffisant pour %s. Disponible: %d, Demandé: %d",
+                            product.getName(), availableStock, requestedQuantity));
+        }
+    }
+
     private Optional<SaleItem> findExistingItem(Sale sale, Product product) {
         return sale.getSaleItems().stream()
                 .filter(item -> item.getProduct().getProductId().equals(product.getProductId()))
                 .findFirst();
     }
 
+    /**
+     * ✅ MISE À JOUR D'ARTICLE EXISTANT AVEC VALIDATION
+     */
     private SaleItemResponseDTO updateExistingItem(SaleItem item, int additionalQuantity) {
         int newQuantity = item.getQuantitySold() + additionalQuantity;
 
-        stockValidationService.validateStockAvailable(
+        // Validation du stock pour la nouvelle quantité totale
+        validateStockAvailability(
                 item.getProduct(),
                 item.getSale().getClient().getUserId(),
                 newQuantity
@@ -281,6 +369,9 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
         return SaleItemMapper.toResponseDTO(item);
     }
 
+    /**
+     * ✅ CRÉATION DE NOUVEL ARTICLE AVEC VALIDATION
+     */
     private SaleItemResponseDTO createNewItem(Sale sale, Product product, int quantity) {
         SaleItem newItem = SaleItem.builder()
                 .sale(sale)
