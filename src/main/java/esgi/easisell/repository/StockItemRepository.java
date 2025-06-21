@@ -88,4 +88,40 @@ public interface StockItemRepository extends JpaRepository<StockItem, UUID> {
             "COUNT(CASE WHEN s.expirationDate <= CURRENT_TIMESTAMP THEN 1 END) as expiredItems " +
             "FROM StockItem s WHERE s.client.userId = :clientId")
     Object[] getStockStatistics(@Param("clientId") UUID clientId);
+
+    // ✅ AJOUTEZ CES MÉTHODES À VOTRE StockItemRepository.java EXISTANT
+
+    /**
+     * Items sans seuil d'alerte configuré
+     */
+    List<StockItem> findByClientUserIdAndReorderThresholdIsNull(UUID clientId);
+
+    /**
+     * Items en rupture de stock (quantité = 0)
+     */
+    List<StockItem> findByClientUserIdAndQuantity(UUID clientId, Integer quantity);
+
+    /**
+     * Items avec stock faible (quantité <= seuil)
+     */
+    @Query("SELECT s FROM StockItem s WHERE s.client.userId = :clientId " +
+            "AND s.quantity <= s.reorderThreshold AND s.reorderThreshold IS NOT NULL")
+    List<StockItem> findLowStockItemsWithThreshold(@Param("clientId") UUID clientId);
+
+    /**
+     * Recherche de stock par code-barres produit
+     */
+    @Query("SELECT s FROM StockItem s WHERE s.client.userId = :clientId " +
+            "AND s.product.barcode = :barcode")
+    List<StockItem> findByClientUserIdAndProductBarcode(@Param("clientId") UUID clientId,
+                                                        @Param("barcode") String barcode);
+
+    /**
+     * Stock total disponible pour un produit
+     */
+    @Query("SELECT COALESCE(SUM(s.quantity), 0) FROM StockItem s " +
+            "WHERE s.product.productId = :productId AND s.client.userId = :clientId " +
+            "AND s.quantity > 0")
+    Integer getTotalAvailableStock(@Param("productId") UUID productId,
+                                   @Param("clientId") UUID clientId);
 }

@@ -81,4 +81,32 @@ public interface SaleRepository extends JpaRepository<Sale, UUID> {
                                           @Param("startDate") Timestamp startDate,
                                           @Param("endDate") Timestamp endDate,
                                           Pageable pageable);
+
+    // ✅ VENTES EN ATTENTE (non finalisées)
+    @Query("SELECT s FROM Sale s WHERE s.client.userId = :clientId " +
+            "AND SIZE(s.payments) = 0 " +
+            "ORDER BY s.saleTimestamp DESC")
+    List<Sale> findPendingSalesByClient(@Param("clientId") UUID clientId);
+
+    // ✅ PRODUITS LES PLUS VENDUS AUJOURD'HUI - VERSION CORRIGÉE
+    @Query("SELECT si.product.productId, si.product.name, SUM(si.quantitySold) as totalQuantity " +
+            "FROM SaleItem si JOIN si.sale s " +
+            "WHERE s.client.userId = :clientId " +
+            "AND DATE(s.saleTimestamp) = CURRENT_DATE " +
+            "AND SIZE(s.payments) > 0 " +
+            "GROUP BY si.product.productId, si.product.name " +
+            "ORDER BY SUM(si.quantitySold) DESC")
+    List<Object[]> findTodayTopSellingProducts(@Param("clientId") UUID clientId);
+
+    // ✅ STATISTIQUES PAR HEURE - VERSION NATIVE SQL
+    @Query(value = "SELECT HOUR(s.sale_timestamp) as hour, COUNT(s.sale_id) as salesCount, " +
+            "COALESCE(SUM(s.total_amount), 0) as totalAmount " +
+            "FROM sale s " +
+            "WHERE s.client_id = UNHEX(REPLACE(:clientId, '-', '')) " +
+            "AND DATE(s.sale_timestamp) = CURDATE() " +
+            "AND (SELECT COUNT(*) FROM payment p WHERE p.sale_id = s.sale_id) > 0 " +
+            "GROUP BY HOUR(s.sale_timestamp) " +
+            "ORDER BY hour",
+            nativeQuery = true)
+    List<Object[]> findTodayHourlySalesStats(@Param("clientId") String clientId);
 }

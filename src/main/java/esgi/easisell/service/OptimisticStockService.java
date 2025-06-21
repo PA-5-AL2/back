@@ -3,6 +3,7 @@ package esgi.easisell.service;
 import esgi.easisell.entity.Product;
 import esgi.easisell.entity.Sale;
 import esgi.easisell.entity.SaleItem;
+import esgi.easisell.entity.StockAuditLog;
 import esgi.easisell.entity.StockItem;
 import esgi.easisell.exception.InsufficientStockException;
 import esgi.easisell.exception.StockUpdateException;
@@ -29,6 +30,7 @@ import java.util.UUID;
 public class OptimisticStockService {
 
     private final StockItemRepository stockItemRepository;
+    private final StockAuditService auditService; // ✅ AJOUT DU SERVICE D'AUDIT
     private static final int MAX_RETRY_ATTEMPTS = 3;
 
     /**
@@ -70,7 +72,7 @@ public class OptimisticStockService {
     }
 
     /**
-     * ✅ DÉCRÉMENTATION POUR UN PRODUIT SPÉCIFIQUE
+     * ✅ DÉCRÉMENTATION POUR UN PRODUIT SPÉCIFIQUE avec AUDIT
      * Utilise la méthode FIFO (First In, First Out) pour gérer les lots
      */
     @Transactional(isolation = Isolation.READ_COMMITTED)
@@ -98,10 +100,17 @@ public class OptimisticStockService {
 
                 if (currentQuantity > 0) {
                     int toDecrease = Math.min(currentQuantity, remainingToDecrease);
+
+                    // ✅ CRÉER UNE COPIE POUR L'AUDIT
+                    StockItem oldItem = createCopyForAudit(stockItem);
+
                     stockItem.setQuantity(currentQuantity - toDecrease);
 
                     // ⚡ POINT CRITIQUE : Sauvegarde avec versioning optimiste
-                    stockItemRepository.save(stockItem);
+                    StockItem savedItem = stockItemRepository.save(stockItem);
+
+                    // ✅ AUDIT AUTOMATIQUE
+                    auditService.logStockUpdate(oldItem, savedItem, StockAuditLog.OperationType.UPDATE);
 
                     remainingToDecrease -= toDecrease;
 
@@ -141,8 +150,14 @@ public class OptimisticStockService {
             StockItem stockItem = stockItemRepository.findById(stockItemId)
                     .orElseThrow(() -> new StockUpdateException("❌ Lot de stock introuvable: " + stockItemId));
 
+            // ✅ CRÉER UNE COPIE POUR L'AUDIT
+            StockItem oldItem = createCopyForAudit(stockItem);
+
             stockItem.setQuantity(stockItem.getQuantity() + quantityToAdd);
-            stockItemRepository.save(stockItem);
+            StockItem savedItem = stockItemRepository.save(stockItem);
+
+            // ✅ AUDIT AUTOMATIQUE
+            auditService.logStockUpdate(oldItem, savedItem, StockAuditLog.OperationType.UPDATE);
 
             log.info("✅ Stock augmenté. Nouvelle quantité: {}", stockItem.getQuantity());
 
@@ -212,5 +227,19 @@ public class OptimisticStockService {
             log.error("❌ ÉCHEC réservation: {}", e.getMessage());
             return false;
         }
+    }
+
+    /**
+     * ✅ MÉTHODE UTILITAIRE : Créer une copie pour l'audit
+     */
+    private StockItem createCopyForAudit(StockItem original) {
+        StockItem copy = new StockItem();
+        copy.setStockItemId(original.getStockItemId());
+        copy.setQuantity(original.getQuantity());
+        copy.setVersion(original.getVersion());
+        copy.setProduct(original.getProduct());
+        copy.setClient(original.getClient());
+        copy.setLastModified(original.getLastModified());
+        return copy;
     }
 }

@@ -25,15 +25,6 @@ public class StockItem {
     private Timestamp expirationDate;
     private BigDecimal purchasePrice;
 
-    //Versioning optimiste
-    @Version
-    @Column(name = "version")
-    private Long version;
-
-    //Timestamp de dernière modification
-    @Column(name = "last_modified")
-    private Timestamp lastModified;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     @ToString.Exclude
@@ -48,6 +39,14 @@ public class StockItem {
     @JoinColumn(name = "supplier_id")
     @ToString.Exclude
     private Supplier supplier;
+
+    @Version
+    @Column(name = "version")
+    private Long version;
+
+    //Timestamp de dernière modification
+    @Column(name = "last_modified")
+    private Timestamp lastModified;
 
     //Callback pour mettre à jour automatiquement le timestamp
     @PreUpdate

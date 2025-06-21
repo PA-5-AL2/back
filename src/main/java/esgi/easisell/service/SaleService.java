@@ -249,14 +249,6 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
     // ========== MÉTHODES SPÉCIFIQUES À LA GESTION MULTI-CAISSES ==========
 
     /**
-     * ✅ VÉRIFICATION DE DISPONIBILITÉ EN TEMPS RÉEL
-     */
-    @Transactional(readOnly = true)
-    public boolean checkProductAvailability(UUID productId, UUID clientId, int requestedQuantity) {
-        return optimisticStockService.isStockSufficient(productId, clientId, requestedQuantity);
-    }
-
-    /**
      * ✅ RÉSERVATION TEMPORAIRE DE STOCK
      */
     @Transactional
@@ -277,22 +269,6 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
             log.error("❌ Erreur lors de la réservation de stock pour la vente: {}", saleId, e);
             return false;
         }
-    }
-
-    /**
-     * ✅ SYNCHRONISATION DU STOCK EN TEMPS RÉEL
-     */
-    @Transactional(readOnly = true)
-    public Map<String, Object> getRealtimeStockInfo(UUID productId, UUID clientId) {
-        int currentStock = optimisticStockService.getTotalStockQuantity(productId, clientId);
-
-        Map<String, Object> stockInfo = new HashMap<>();
-        stockInfo.put("productId", productId);
-        stockInfo.put("currentStock", currentStock);
-        stockInfo.put("available", currentStock > 0);
-        stockInfo.put("lastUpdated", System.currentTimeMillis());
-
-        return stockInfo;
     }
 
     // ========== MÉTHODES EXISTANTES CONSERVÉES ==========
@@ -398,5 +374,70 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
             throw new ProductNotBelongToClientException(
                     "Ce produit n'appartient pas à ce client");
         }
+    }
+
+    // ✅ AJOUTEZ CES MÉTHODES À VOTRE SaleService.java EXISTANT
+
+    /**
+     * Récupère les ventes en attente (non payées)
+     */
+    public List<SaleResponseDTO> getPendingSales(UUID clientId) {
+        return saleRepository.findPendingSalesByClient(clientId).stream()
+                .map(SaleMapper::toResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    // ✅ MODIFIEZ CES MÉTHODES DANS VOTRE SaleService.java
+
+    /**
+     * Top produits vendus aujourd'hui - ADAPTÉ
+     */
+    public List<Object[]> getTodayTopProducts(UUID clientId, int limit) {
+        List<Object[]> allProducts = saleRepository.findTodayTopSellingProducts(clientId);
+
+        // Limiter manuellement les résultats
+        return allProducts.stream()
+                .limit(limit)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Statistiques de ventes par heure - ADAPTÉ
+     */
+    public List<Object[]> getTodayHourlySalesStats(UUID clientId) {
+        // ✅ Passer l'UUID comme String pour la requête native
+        return saleRepository.findTodayHourlySalesStats(clientId.toString());
+    }
+
+    /**
+     * Vérification de disponibilité de stock avant ajout
+     */
+    public boolean checkProductAvailability(UUID productId, UUID clientId, int quantity) {
+        return optimisticStockService.isStockSufficient(productId, clientId, quantity);
+    }
+
+    /**
+     * Informations de stock en temps réel
+     */
+    public Map<String, Object> getRealtimeStockInfo(UUID productId, UUID clientId) {
+        int currentStock = optimisticStockService.getTotalStockQuantity(productId, clientId);
+
+        // Récupérer le produit pour plus d'infos
+        Optional<Product> productOpt = productRepository.findById(productId);
+
+        Map<String, Object> stockInfo = new HashMap<>();
+        stockInfo.put("productId", productId);
+        stockInfo.put("currentStock", currentStock);
+        stockInfo.put("available", currentStock > 0);
+        stockInfo.put("lastUpdated", System.currentTimeMillis());
+
+        if (productOpt.isPresent()) {
+            Product product = productOpt.get();
+            stockInfo.put("productName", product.getName());
+            stockInfo.put("barcode", product.getBarcode());
+            stockInfo.put("unitPrice", product.getUnitPrice());
+        }
+
+        return stockInfo;
     }
 }

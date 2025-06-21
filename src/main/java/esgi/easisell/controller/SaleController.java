@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import esgi.easisell.service.OptimisticStockService;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -22,11 +23,13 @@ public class SaleController {
 
     private final SaleService saleService;
     private final SecurityUtils securityUtils;
+    private final OptimisticStockService optimisticStockService;
 
     // Constructeur explicite avec log
-    public SaleController(SaleService saleService, SecurityUtils securityUtils) {
+    public SaleController(SaleService saleService, SecurityUtils securityUtils, OptimisticStockService optimisticStockService) {
         this.saleService = saleService;
         this.securityUtils = securityUtils;
+        this.optimisticStockService = optimisticStockService;
         log.info("========== SaleController initialisé ! ==========");
     }
 
@@ -390,6 +393,100 @@ public class SaleController {
         } catch (Exception e) {
             log.error("Erreur lors de la vérification des droits", e);
             return false;
+        }
+    }
+
+    // ✅ AJOUTEZ CES MÉTHODES À VOTRE SaleController.java EXISTANT
+
+    /**
+     * Vérifier la disponibilité d'un produit
+     * GET /api/sales/check-availability
+     */
+    @GetMapping("/check-availability")
+    public ResponseEntity<?> checkProductAvailability(
+            @RequestParam UUID productId,
+            @RequestParam UUID clientId,
+            @RequestParam int quantity,
+            HttpServletRequest request) {
+
+        if (!securityUtils.canAccessClientData(clientId, request)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Accès non autorisé"));
+        }
+
+        boolean available = saleService.checkProductAvailability(productId, clientId, quantity);
+        int currentStock = optimisticStockService.getTotalStockQuantity(productId, clientId);
+
+        return ResponseEntity.ok(Map.of(
+                "available", available,
+                "currentStock", currentStock,
+                "requestedQuantity", quantity,
+                "productId", productId,
+                "timestamp", System.currentTimeMillis()
+        ));
+    }
+
+    /**
+     * Stock temps réel d'un produit
+     * GET /api/sales/realtime-stock/{productId}
+     */
+    @GetMapping("/realtime-stock/{productId}")
+    public ResponseEntity<?> getRealtimeStock(
+            @PathVariable UUID productId,
+            @RequestParam UUID clientId,
+            HttpServletRequest request) {
+
+        if (!securityUtils.canAccessClientData(clientId, request)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Accès non autorisé"));
+        }
+
+        Map<String, Object> stockInfo = saleService.getRealtimeStockInfo(productId, clientId);
+        return ResponseEntity.ok(stockInfo);
+    }
+
+    /**
+     * Tableau de bord multi-caisses
+     * GET /api/sales/client/{clientId}/dashboard
+     */
+    @GetMapping("/client/{clientId}/dashboard")
+    public ResponseEntity<?> getMultiPosDashboard(
+            @PathVariable UUID clientId,
+            HttpServletRequest request) {
+
+        if (!securityUtils.canAccessClientData(clientId, request)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Accès non autorisé"));
+        }
+
+        try {
+            // Ventes en cours
+            List<SaleResponseDTO> pendingSales = saleService.getPendingSales(clientId);
+
+            // Total du jour
+            BigDecimal todayTotal = saleService.getTodayTotalSales(clientId);
+
+            // Produits populaires
+            List<Object[]> topProducts = saleService.getTodayTopProducts(clientId, 5);
+
+            // Statistiques par heure
+            List<Object[]> hourlyStats = saleService.getTodayHourlySalesStats(clientId);
+
+            Map<String, Object> dashboard = Map.of(
+                    "pendingSales", pendingSales,
+                    "pendingSalesCount", pendingSales.size(),
+                    "todayTotal", todayTotal,
+                    "topProducts", topProducts,
+                    "hourlyStats", hourlyStats,
+                    "timestamp", System.currentTimeMillis()
+            );
+
+            return ResponseEntity.ok(dashboard);
+
+        } catch (Exception e) {
+            log.error("Erreur dashboard multi-caisses", e);
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", e.getMessage()));
         }
     }
 }

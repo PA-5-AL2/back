@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -174,5 +175,82 @@ public class StockController {
         }
 
         return dto;
+    }
+
+    /**
+     * Configurer le seuil d'alerte
+     * PATCH /api/stock/{stockItemId}/alert-threshold
+     */
+    @PatchMapping("/{stockItemId}/alert-threshold")
+    public ResponseEntity<?> setAlertThreshold(
+            @PathVariable UUID stockItemId,
+            @RequestParam int threshold) {
+
+        try {
+            boolean updated = stockItemService.updateReorderThreshold(stockItemId, threshold);
+
+            if (updated) {
+                return ResponseEntity.ok(Map.of(
+                        "message", "Seuil d'alerte configuré avec succès",
+                        "stockItemId", stockItemId,
+                        "threshold", threshold,
+                        "timestamp", System.currentTimeMillis()
+                ));
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+
+        } catch (Exception e) {
+            log.error("Erreur lors de la configuration du seuil", e);
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Tableau de bord des alertes
+     * GET /api/stock/client/{clientId}/alerts-dashboard
+     */
+    @GetMapping("/client/{clientId}/alerts-dashboard")
+    public ResponseEntity<?> getAlertsDashboard(@PathVariable UUID clientId) {
+        try {
+            List<StockItem> lowStockItems = stockItemService.getLowStockItems(clientId);
+            List<StockItem> expiringItems = stockItemService.getExpiringItems(clientId, 7);
+            List<StockItem> outOfStockItems = stockItemService.getOutOfStockItems(clientId);
+
+            Map<String, Object> alerts = new HashMap<>();
+
+            // Stock faible
+            alerts.put("lowStock", lowStockItems.stream()
+                    .map(this::convertToResponseDTO)
+                    .collect(Collectors.toList()));
+
+            // Expire bientôt
+            alerts.put("expiringSoon", expiringItems.stream()
+                    .map(this::convertToResponseDTO)
+                    .collect(Collectors.toList()));
+
+            // Rupture de stock
+            alerts.put("outOfStock", outOfStockItems.stream()
+                    .map(this::convertToResponseDTO)
+                    .collect(Collectors.toList()));
+
+            // Statistiques
+            alerts.put("summary", Map.of(
+                    "lowStockCount", lowStockItems.size(),
+                    "expiringCount", expiringItems.size(),
+                    "outOfStockCount", outOfStockItems.size(),
+                    "totalAlerts", lowStockItems.size() + expiringItems.size() + outOfStockItems.size()
+            ));
+
+            alerts.put("timestamp", System.currentTimeMillis());
+
+            return ResponseEntity.ok(alerts);
+
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération du dashboard d'alertes", e);
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", e.getMessage()));
+        }
     }
 }

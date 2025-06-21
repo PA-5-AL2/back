@@ -186,4 +186,57 @@ public class StockItemService {
                 .map(product -> product.getBarcode() != null && !product.getBarcode().trim().isEmpty())
                 .orElse(false);
     }
+
+    // ✅ AJOUTEZ CES MÉTHODES À VOTRE StockItemService.java EXISTANT
+
+    /**
+     * Items sans seuil configuré
+     */
+    public List<StockItem> getItemsWithoutThreshold(UUID clientId) {
+        return stockItemRepository.findByClientUserIdAndReorderThresholdIsNull(clientId);
+    }
+
+    /**
+     * Items en rupture de stock
+     */
+    public List<StockItem> getOutOfStockItems(UUID clientId) {
+        return stockItemRepository.findByClientUserIdAndQuantity(clientId, 0);
+    }
+
+    /**
+     * Mettre à jour le seuil d'alerte
+     */
+    @Transactional
+    public boolean updateReorderThreshold(UUID stockItemId, int threshold) {
+        return stockItemRepository.findById(stockItemId)
+                .map(item -> {
+                    item.setReorderThreshold(threshold);
+                    stockItemRepository.save(item);
+                    return true;
+                })
+                .orElse(false);
+    }
+
+    /**
+     * Stock disponible par code-barres
+     */
+    public List<StockItem> findStockByBarcode(UUID clientId, String barcode) {
+        return stockItemRepository.findByClientUserIdAndProductBarcode(clientId, barcode);
+    }
+
+    /**
+     * Vérification rapide de disponibilité
+     */
+    public boolean isProductAvailable(UUID productId, UUID clientId, int requestedQuantity) {
+        Integer available = stockItemRepository.getTotalAvailableStock(productId, clientId);
+        return available != null && available >= requestedQuantity;
+    }
+
+    /**
+     * Stock total disponible
+     */
+    public int getTotalAvailableStock(UUID productId, UUID clientId) {
+        Integer total = stockItemRepository.getTotalAvailableStock(productId, clientId);
+        return total != null ? total : 0;
+    }
 }
