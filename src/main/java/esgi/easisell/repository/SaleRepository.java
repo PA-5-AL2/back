@@ -109,4 +109,24 @@ public interface SaleRepository extends JpaRepository<Sale, UUID> {
             "ORDER BY hour",
             nativeQuery = true)
     List<Object[]> findTodayHourlySalesStats(@Param("clientId") String clientId);
+
+    @Query("SELECT s FROM Sale s " +
+            "LEFT JOIN FETCH s.saleItems si " +
+            "WHERE s.client.userId = :clientId " +
+            "AND s.saleTimestamp >= :startDate " +
+            "AND s.saleTimestamp <= :endDate " +
+            "ORDER BY s.saleTimestamp DESC")
+    List<Sale> findSalesForStatistics(@Param("clientId") UUID clientId,
+                                      @Param("startDate") Timestamp startDate,
+                                      @Param("endDate") Timestamp endDate);
+
+    @Query("""
+    SELECT s FROM Sale s
+    JOIN FETCH s.saleItems i
+    JOIN FETCH i.product p
+    WHERE s.client.userId = :clientId
+    AND s.saleTimestamp BETWEEN :start AND :end
+    AND p.category.categoryId = :categoryId
+    """)
+    List<Sale> findSalesForCategoryStatistics(UUID clientId, UUID categoryId, Timestamp start, Timestamp end);
 }
