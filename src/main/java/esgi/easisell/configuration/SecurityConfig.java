@@ -49,6 +49,7 @@ public class SecurityConfig {
                                 .requestMatchers("/api/emails/**").permitAll()
                                 .requestMatchers("/api/test/**").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/").permitAll()
+                                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                                 // Endpoints ADMIN uniquement
                                 .requestMatchers("/api/users/**").hasRole("ADMIN")
