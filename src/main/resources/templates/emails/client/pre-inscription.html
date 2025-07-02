@@ -31,20 +31,6 @@
         <li>Date d'inscription : <strong th:text="${#temporals.format(user.createdAt, 'dd/MM/yyyy')}">01/01/2025</strong></li>
     </ul>
 
-    <div th:if="${tempPassword != null}" class="credentials">
-        <h3>Vos identifiants de connexion :</h3>
-        <p><strong>Email :</strong> <span th:text="${user.username}">email@example.com</span></p>
-        <p><strong>Mot de passe temporaire :</strong> <span th:text="${tempPassword}">mot_de_passe</span></p>
-
-        <p>Vous pouvez dès à présent accéder à votre espace client en vous connectant via notre application mobile ou web.</p>
-
-        <p style="text-align: center; margin: 25px 0;">
-            <a th:href="${loginUrl}" class="button">Se connecter</a>
-        </p>
-
-        <p>Pour votre sécurité, nous vous recommandons de changer votre mot de passe lors de votre première connexion.</p>
-    </div>
-
     <!-- NOUVELLE LOGIQUE : Système d'activation sécurisé -->
     <div th:if="${activationToken != null}" class="activation">
         <h3>🔐 Activation de votre compte :</h3>
