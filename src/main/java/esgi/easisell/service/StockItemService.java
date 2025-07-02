@@ -187,8 +187,6 @@ public class StockItemService {
                 .orElse(false);
     }
 
-    // ✅ AJOUTEZ CES MÉTHODES À VOTRE StockItemService.java EXISTANT
-
     /**
      * Items sans seuil configuré
      */

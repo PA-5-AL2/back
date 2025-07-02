@@ -395,8 +395,6 @@ public class SaleController {
         }
     }
 
-    // ✅ AJOUTEZ CES MÉTHODES À VOTRE SaleController.java EXISTANT
-
     /**
      * Vérifier la disponibilité d'un produit
      * GET /api/sales/check-availability
