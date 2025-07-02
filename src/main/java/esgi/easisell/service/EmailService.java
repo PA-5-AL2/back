@@ -16,4 +16,6 @@ public interface EmailService {
                                       String reference) throws EmailException;
     void sendHtmlEmail(String to, String subject, String templateName,
                        Map<String, Object> variables) throws EmailException;
+
+    void sendAccountActivationEmail(User user, String activationToken) throws EmailException;
 }

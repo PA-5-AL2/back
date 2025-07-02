@@ -158,4 +158,33 @@ public class EmailServiceImpl implements EmailService {
             throw new EmailException("Erreur inattendue lors de l'envoi de l'email à: " + to, e);
         }
     }
+
+    @Async
+    @Override
+    public void sendAccountActivationEmail(User user, String activationToken) throws EmailException {
+        log.info("Préparation de l'email d'activation pour: {}", user.getUsername());
+        try {
+            String frontendUrl = env.getProperty("app.frontend.url", "http://localhost:3000");
+            String activationUrl = env.getProperty("app.activation.url", frontendUrl + "/activate")
+                    + "?token=" + activationToken;
+
+            Map<String, Object> variables = new HashMap<>();
+            variables.put("user", user);
+            variables.put("activationToken", activationToken);
+            variables.put("activationUrl", activationUrl);
+            variables.put("logoUrl", env.getProperty("app.logo.url", "https://via.placeholder.com/150"));
+            variables.put("contactUrl", env.getProperty("app.contact.url", frontendUrl + "/contact"));
+            variables.put("termsUrl", env.getProperty("app.terms.url", frontendUrl + "/terms"));
+
+            sendHtmlEmail(user.getUsername(),
+                    "Activez votre compte EasiSell",
+                    "emails/client/pre-inscription",
+                    variables);
+
+            log.info("Email d'activation envoyé à: {}", user.getUsername());
+        } catch (Exception e) {
+            log.error("Échec envoi email d'activation à: {}", user.getUsername(), e);
+            throw new EmailException("Échec envoi email d'activation à: " + user.getUsername(), e);
+        }
+    }
 }
