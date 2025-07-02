@@ -8,7 +8,6 @@ import java.time.LocalDate;
 import java.util.Map;
 
 public interface EmailService {
-    void sendPreRegistrationEmail(User user, String rawPassword) throws EmailException;
     void sendPaymentReminder(Client client, String serviceName, BigDecimal amount,
                              String currency, LocalDate dueDate, boolean isLate) throws EmailException;
     void sendCancellationConfirmation(Client client, String serviceName,

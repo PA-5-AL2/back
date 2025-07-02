@@ -6,7 +6,7 @@ import esgi.easisell.entity.AdminUser;
 import esgi.easisell.entity.Client;
 import esgi.easisell.entity.User;
 import esgi.easisell.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -17,8 +17,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +30,16 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
     private final AuthenticationManager authenticationManager;
+    private final EmailService emailService;
+
+    private final Map<String, ActivationData> activationTokens = new ConcurrentHashMap<>();
+
+    @Data
+    @AllArgsConstructor
+    private static class ActivationData {
+        private UUID userId;
+        private LocalDateTime expiresAt;
+    }
 
     /**
      * Vérifie si un nom d'utilisateur est disponible
@@ -113,5 +124,94 @@ public class AuthService {
 
         log.info("Token généré avec succès pour: {}", user.getUsername());
         return authData;
+    }
+
+    /**
+     * Version sécurisée de registerUser (sans mot de passe)
+     */
+    @Transactional
+    public Map<String, Object> registerUserWithActivation(AuthDTO authDTO) {
+        User user;
+
+        if ("administrateur".equalsIgnoreCase(authDTO.getRole()) || "admin".equalsIgnoreCase(authDTO.getRole())) {
+            user = new AdminUser();
+            user.setRole("ADMIN");
+        } else if ("client".equalsIgnoreCase(authDTO.getRole())) {
+            Client client = new Client();
+            client.setContractStatus(authDTO.getContractStatus());
+            client.setCurrencyPreference(authDTO.getCurrencyPreference());
+            client.setName(authDTO.getName());
+            client.setAddress(authDTO.getAddress());
+
+            user = client;
+            user.setRole("CLIENT");
+        } else {
+            throw new IllegalArgumentException("Role must be 'administrateur' or 'client'");
+        }
+
+        user.setUsername(authDTO.getUsername());
+        user.setFirstName(authDTO.getUsername().split("@")[0]);
+        // PAS de mot de passe initial !
+        user.setPassword(null);
+
+        User savedUser = userRepository.save(user);
+
+        // Générer token d'activation
+        String activationToken = generateActivationToken();
+
+        // ✅ Stocker le token
+        activationTokens.put(activationToken, new ActivationData(
+                savedUser.getUserId(),
+                LocalDateTime.now().plusDays(7)
+        ));
+
+        // ✅ Envoyer email d'activation
+        try {
+            emailService.sendAccountActivationEmail(savedUser, activationToken);
+        } catch (Exception e) {
+            log.error("Échec envoi email d'activation pour: {}", savedUser.getUsername(), e);
+        }
+
+        return Map.of(
+                "user", savedUser,
+                "message", "Compte créé. Vérifiez votre email pour l'activation.",
+                "activationRequired", true
+        );
+    }
+
+    /**
+     * ✅ NOUVELLE - Activation du compte
+     */
+    @Transactional
+    public void activateAccount(String token, String newPassword) {
+        ActivationData activationData = activationTokens.get(token);
+
+        if (activationData == null) {
+            throw new IllegalArgumentException("Token invalide");
+        }
+
+        if (activationData.getExpiresAt().isBefore(LocalDateTime.now())) {
+            activationTokens.remove(token);
+            throw new IllegalArgumentException("Token expiré");
+        }
+
+        // ✅ Activer le compte
+        User user = userRepository.findById(activationData.getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        // ✅ Supprimer le token utilisé
+        activationTokens.remove(token);
+
+        log.info("Compte activé avec succès pour: {}", user.getUsername());
+    }
+
+    /**
+     * ✅ NOUVELLE - Génération de token
+     */
+    private String generateActivationToken() {
+        return UUID.randomUUID().toString() + "-" + System.currentTimeMillis();
     }
 }

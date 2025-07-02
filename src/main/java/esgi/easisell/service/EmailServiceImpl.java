@@ -35,34 +35,6 @@ public class EmailServiceImpl implements EmailService {
 
     @Async
     @Override
-    public void sendPreRegistrationEmail(User user, String rawPassword) throws EmailException {
-        log.info("Préparation de l'email de pré-inscription pour: {}", user.getUsername());
-        try {
-            Map<String, Object> variables = new HashMap<>();
-            variables.put("user", user);
-            variables.put("tempPassword", rawPassword);
-
-            // Vérification des valeurs null pour les URLs
-            String frontendUrl = env.getProperty("app.frontend.url", "http://localhost:3000");
-            variables.put("loginUrl", frontendUrl + "/login");
-            variables.put("contactUrl", env.getProperty("app.contact.url", frontendUrl + "/contact"));
-            variables.put("termsUrl", env.getProperty("app.terms.url", frontendUrl + "/terms"));
-            variables.put("logoUrl", env.getProperty("app.logo.url", "https://via.placeholder.com/150"));
-
-            sendHtmlEmail(user.getUsername(),
-                    "Bienvenue sur EasiSell - Inscription confirmée",
-                    "emails/client/pre-inscription",
-                    variables);
-
-            log.info("Email de pré-inscription envoyé à: {}", user.getUsername());
-        } catch (Exception e) {
-            log.error("Échec de l'envoi de l'email de pré-inscription à: {}", user.getUsername(), e);
-            throw new EmailException("Échec de l'envoi de l'email de pré-inscription à: " + user.getUsername(), e);
-        }
-    }
-
-    @Async
-    @Override
     public void sendPaymentReminder(Client client, String serviceName, BigDecimal amount,
                                     String currency, LocalDate dueDate, boolean isLate) throws EmailException {
         log.info("Préparation du rappel de paiement pour: {} (service: {})", client.getUsername(), serviceName);

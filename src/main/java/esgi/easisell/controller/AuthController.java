@@ -1,5 +1,6 @@
 package esgi.easisell.controller;
 
+import esgi.easisell.dto.ActivationDTO;
 import esgi.easisell.dto.AuthDTO;
 import esgi.easisell.entity.User;
 import esgi.easisell.service.AuthService;
@@ -11,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -18,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
-    private final EmailService emailService;
+
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody AuthDTO authDTO) {
@@ -27,11 +30,8 @@ public class AuthController {
         }
 
         try {
-            User registeredUser = authService.registerUser(authDTO);
-            if ("client".equalsIgnoreCase(authDTO.getRole())) {
-                emailService.sendPreRegistrationEmail(registeredUser, authDTO.getPassword());
-            }
-            return ResponseEntity.ok(registeredUser);
+            Map<String, Object> registrationResult = authService.registerUserWithActivation(authDTO);
+            return ResponseEntity.ok(registrationResult);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
@@ -48,6 +48,16 @@ public class AuthController {
         } catch (AuthenticationException e) {
             log.error("Authentication failed", e);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
+        }
+    }
+
+    @PostMapping("/activate")
+    public ResponseEntity<?> activateAccount(@RequestBody ActivationDTO activationDTO) {
+        try {
+            authService.activateAccount(activationDTO.getToken(), activationDTO.getPassword());
+            return ResponseEntity.ok(Map.of("message", "Compte activé avec succès"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 }
