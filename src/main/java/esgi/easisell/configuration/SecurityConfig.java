@@ -51,6 +51,13 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.GET, "/").permitAll()
                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
+                                // ✅ AJOUT : Endpoints Swagger/OpenAPI publics
+                                .requestMatchers("/v3/api-docs/**").permitAll()
+                                .requestMatchers("/swagger-ui/**").permitAll()
+                                .requestMatchers("/swagger-ui.html").permitAll()
+                                .requestMatchers("/swagger-resources/**").permitAll()
+                                .requestMatchers("/webjars/**").permitAll()
+
                                 // Endpoints ADMIN uniquement
                                 .requestMatchers("/api/users/**").hasRole("ADMIN")
 
