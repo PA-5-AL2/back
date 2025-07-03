@@ -1,3 +1,15 @@
+/**
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * PROJET EASISELL - PLATEFORME DE GESTION COMMERCIALE
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * @file        : EmailSend.java
+ * @description : Entité historique d'envoi d'emails
+ * @author      : Chancy MOUYABI
+ * @version     : v1.0.0
+ * @date        : 03/07/2025
+ * @package     : esgi.easisell.entity
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ */
 package esgi.easisell.entity;
 
 import jakarta.persistence.*;

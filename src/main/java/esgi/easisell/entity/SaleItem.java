@@ -1,3 +1,15 @@
+/**
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * PROJET EASISELL - PLATEFORME DE GESTION COMMERCIALE
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * @file        : SaleItem.java
+ * @description : Entité article dans une vente
+ * @author      : Chancy MOUYABI
+ * @version     : v1.0.0
+ * @date        : 03/07/2025
+ * @package     : esgi.easisell.entity
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ */
 package esgi.easisell.entity;
 
 import jakarta.persistence.*;

@@ -1,3 +1,16 @@
+/**
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * PROJET EASISELL - PLATEFORME DE GESTION COMMERCIALE
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * @file        : Client.java
+ * @description : Entité client/supérette utilisant le système
+ * @author      : Samira SEDDAR
+ * @version     : v1.0.0
+ * @date        : 03/07/2025
+ * @package     : esgi.easisell.entity
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ */
+
 package esgi.easisell.entity;
 
 import jakarta.persistence.*;
