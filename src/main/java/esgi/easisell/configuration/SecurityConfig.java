@@ -45,13 +45,13 @@ public class SecurityConfig {
                         auth
                                 // Endpoints publics - PAS d'authentification
                                 .requestMatchers("/api/auth/login").permitAll()
-                                .requestMatchers("/api/auth/register").permitAll()  // ✅ CHANGEMENT ICI
+                                .requestMatchers("/api/auth/register").permitAll()  // CHANGEMENT ICI
                                 .requestMatchers("/api/emails/**").permitAll()
                                 .requestMatchers("/api/test/**").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/").permitAll()
                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                                // ✅ AJOUT : Endpoints Swagger/OpenAPI publics
+                                // AJOUT : Endpoints Swagger/OpenAPI publics
                                 .requestMatchers("/v3/api-docs/**").permitAll()
                                 .requestMatchers("/swagger-ui/**").permitAll()
                                 .requestMatchers("/swagger-ui.html").permitAll()

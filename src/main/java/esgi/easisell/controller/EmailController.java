@@ -1,6 +1,5 @@
 package esgi.easisell.controller;
 
-import esgi.easisell.dto.EmailPreInscriptionDTO;
 import esgi.easisell.dto.EmailReminderDTO;
 import esgi.easisell.dto.EmailCancellationDTO;
 import esgi.easisell.entity.Client;
@@ -122,41 +121,5 @@ public class EmailController {
                 "status", "active",
                 "message", "Service d'email opérationnel"
         ));
-    }
-
-    /**
-     * Endpoint pour envoyer un email de pré-inscription à un client
-     */
-    @PostMapping("/pre-inscription")
-    public ResponseEntity<?> sendPreInscriptionEmail(@RequestBody EmailPreInscriptionDTO preInscriptionDTO) {
-        log.info("Demande d'envoi d'email de pré-inscription pour le client ID: {}", preInscriptionDTO.getClientId());
-
-        try {
-            Optional<Client> clientOpt = clientRepository.findById(UUID.fromString(preInscriptionDTO.getClientId()));
-
-            if (clientOpt.isEmpty()) {
-                return ResponseEntity.badRequest().body(Map.of(
-                        "success", false,
-                        "message", "Client non trouvé avec l'ID: " + preInscriptionDTO.getClientId()
-                ));
-            }
-
-            Client client = clientOpt.get();
-
-            // ✅ Utiliser la méthode existante mais avec token au lieu de password
-            emailService.sendAccountActivationEmail(client, preInscriptionDTO.getActivationToken());
-
-            return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "message", "Email de pré-inscription envoyé avec succès à " + client.getUsername()
-            ));
-
-        } catch (EmailException e) {
-            log.error("Erreur lors de l'envoi de l'email de pré-inscription", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
-                    "success", false,
-                    "message", "Erreur lors de l'envoi de l'email: " + e.getMessage()
-            ));
-        }
     }
 }

@@ -11,7 +11,6 @@
         .footer { margin-top: 20px; padding: 10px; text-align: center; font-size: 0.8em; color: #777; }
         .button { background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block; }
         .credentials { background: #f9f9f9; padding: 15px; border-left: 4px solid #4CAF50; margin: 15px 0; }
-        .activation { background: #e8f5e8; padding: 15px; border-left: 4px solid #4CAF50; margin: 15px 0; }
     </style>
 </head>
 <body>
@@ -31,22 +30,19 @@
         <li>Date d'inscription : <strong th:text="${#temporals.format(user.createdAt, 'dd/MM/yyyy')}">01/01/2025</strong></li>
     </ul>
 
-    <!-- NOUVELLE LOGIQUE : Système d'activation sécurisé -->
-    <div th:if="${activationToken != null}" class="activation">
-        <h3>🔐 Activation de votre compte :</h3>
-        <p>Pour finaliser votre inscription et choisir votre mot de passe sécurisé, cliquez sur le lien ci-dessous :</p>
-
-        <p style="text-align: center; margin: 25px 0;">
-            <a th:href="${activationUrl}" class="button">Activer mon compte</a>
-        </p>
-
-        <p><strong>⚠️ Important :</strong></p>
-        <ul>
-            <li>Ce lien est valide pendant <strong>7 jours</strong></li>
-            <li>Il ne peut être utilisé qu'<strong>une seule fois</strong></li>
-            <li>Vous devrez choisir votre propre mot de passe</li>
-        </ul>
+    <div class="credentials">
+        <h3>Vos identifiants de connexion :</h3>
+        <p><strong>Email :</strong> <span th:text="${user.username}">email@example.com</span></p>
+        <p><strong>Mot de passe temporaire :</strong> <span th:text="${tempPassword}">mot_de_passe</span></p>
     </div>
+
+    <p>Vous pouvez dès à présent accéder à votre espace client en vous connectant via notre application mobile ou web.</p>
+
+    <p style="text-align: center; margin: 25px 0;">
+        <a th:href="${loginUrl}" class="button">Se connecter</a>
+    </p>
+
+    <p>Pour votre sécurité, nous vous recommandons de changer votre mot de passe lors de votre première connexion.</p>
 
     <p>Si vous n'êtes pas à l'origine de cette inscription, veuillez ignorer cet email.</p>
 </div>
