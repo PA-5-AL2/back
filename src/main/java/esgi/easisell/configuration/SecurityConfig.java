@@ -43,25 +43,26 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth ->
                         auth
-                                // Endpoints publics - PAS d'authentification
                                 .requestMatchers("/api/auth/login").permitAll()
-                                .requestMatchers("/api/auth/register").permitAll()  // CHANGEMENT ICI
+                                .requestMatchers("/api/auth/register").permitAll()
                                 .requestMatchers("/api/emails/**").permitAll()
                                 .requestMatchers("/api/test/**").permitAll()
+                                .requestMatchers("/api/client-requests/submit").permitAll()
+                                .requestMatchers("/api/public/**").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/").permitAll()
                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                                // AJOUT : Endpoints Swagger/OpenAPI publics
+                                // Endpoints Swagger/OpenAPI publics
                                 .requestMatchers("/v3/api-docs/**").permitAll()
                                 .requestMatchers("/swagger-ui/**").permitAll()
                                 .requestMatchers("/swagger-ui.html").permitAll()
                                 .requestMatchers("/swagger-resources/**").permitAll()
                                 .requestMatchers("/webjars/**").permitAll()
 
-                                // Endpoints ADMIN uniquement
+                                // ENDPOINTS ADMIN uniquement
                                 .requestMatchers("/api/users/**").hasRole("ADMIN")
 
-                                // Tous les autres endpoints nécessitent une authentification
+                                // TOUS LES AUTRES endpoints nécessitent une authentification
                                 .anyRequest().authenticated())
                 .addFilterBefore(new JwtFilter(customUserDetailsService,jwtUtils), UsernamePasswordAuthenticationFilter.class)
                 .build();

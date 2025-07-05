@@ -20,7 +20,7 @@ import java.sql.Timestamp;
 import java.util.UUID;
 
 /**
- * ✅ TABLE D'AUDIT pour traçabilité des modifications de stock
+ * TABLE D'AUDIT pour traçabilité des modifications de stock
  * Sera créée automatiquement par JPA
  */
 @Entity

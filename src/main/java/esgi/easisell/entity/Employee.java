@@ -47,6 +47,5 @@ public class Employee {
     @ToString.Exclude
     private Client client; // La supérette pour laquelle il travaille
 
-    @Builder.Default
     private Boolean isActive = true;
 }

@@ -4,7 +4,7 @@
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  * @file        : User.java
  * @description : Entité abstraite utilisateur du système
- * @author      : Chancy MOUYABI
+ * @author      : Samira SEDDAR
  * @version     : v1.0.0
  * @date        : 03/07/2025
  * @package     : esgi.easisell.entity
