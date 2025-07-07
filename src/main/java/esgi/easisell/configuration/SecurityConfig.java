@@ -59,7 +59,11 @@ public class SecurityConfig {
                                 .requestMatchers("/swagger-resources/**").permitAll()
                                 .requestMatchers("/webjars/**").permitAll()
 
-                                // ENDPOINTS ADMIN uniquement
+                                .requestMatchers(HttpMethod.PUT, "/api/users/clients/*/password").hasAnyRole("CLIENT", "ADMIN")
+                                .requestMatchers(HttpMethod.PUT, "/api/users/admins/*/password").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.PUT, "/api/users/admin/clients/*/password").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.PUT, "/api/users/admin/admins/*/password").hasRole("ADMIN")
+
                                 .requestMatchers("/api/users/**").hasRole("ADMIN")
 
                                 // TOUS LES AUTRES endpoints nécessitent une authentification

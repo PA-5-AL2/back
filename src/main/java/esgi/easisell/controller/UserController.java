@@ -1,8 +1,6 @@
 package esgi.easisell.controller;
 
-import esgi.easisell.dto.ClientResponseDTO;
-import esgi.easisell.dto.UpdateAdminDTO;
-import esgi.easisell.dto.UpdateClientDTO;
+import esgi.easisell.dto.*;
 import esgi.easisell.entity.AdminUser;
 import esgi.easisell.entity.Client;
 import esgi.easisell.service.AdminUserService;
@@ -85,5 +83,47 @@ public class UserController {
         return adminUserService.updateUser(id, dto)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+    @PutMapping("/clients/{id}/password")
+    public ResponseEntity<String> changeClientPassword(@PathVariable UUID id, @RequestBody ChangePasswordDTO dto) {
+        try {
+            return clientService.changePassword(id, dto)
+                    .map(client -> ResponseEntity.ok("Mot de passe modifié avec succès"))
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/admins/{id}/password")
+    public ResponseEntity<String> changeAdminPassword(@PathVariable UUID id, @RequestBody ChangePasswordDTO dto) {
+        try {
+            return adminUserService.changePassword(id, dto)
+                    .map(admin -> ResponseEntity.ok("Mot de passe modifié avec succès"))
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+    @PutMapping("/admin/clients/{id}/password")
+    public ResponseEntity<String> adminChangeClientPassword(@PathVariable UUID id, @RequestBody AdminChangePasswordDTO dto) {
+        try {
+            return clientService.adminChangePassword(id, dto)
+                    .map(client -> ResponseEntity.ok("Mot de passe du client modifié avec succès"))
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erreur lors de la modification");
+        }
+    }
+
+    @PutMapping("/admin/admins/{id}/password")
+    public ResponseEntity<String> adminChangeAdminPassword(@PathVariable UUID id, @RequestBody AdminChangePasswordDTO dto) {
+        try {
+            return adminUserService.adminChangePassword(id, dto)
+                    .map(admin -> ResponseEntity.ok("Mot de passe de l'admin modifié avec succès"))
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erreur lors de la modification");
+        }
     }
 }
