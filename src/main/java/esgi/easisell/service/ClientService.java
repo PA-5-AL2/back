@@ -5,10 +5,12 @@ import esgi.easisell.dto.ChangePasswordDTO;
 import esgi.easisell.dto.UpdateClientDTO;
 import esgi.easisell.entity.Client;
 import esgi.easisell.repository.ClientRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
 
 import java.util.Optional;
 import java.util.UUID;
@@ -19,10 +21,19 @@ public class ClientService extends UserService<Client, UpdateClientDTO> {
 
     private final ClientRepository clientRepository;
     private final PasswordEncoder passwordEncoder;
+    private final DeletedUserService deletedUserService;
 
     @Override
     protected JpaRepository<Client, UUID> getRepository() {
         return clientRepository;
+    }
+    @Override
+    @Transactional
+    public void deleteUserWithArchive(UUID id, String deletedBy, String reason) {
+        clientRepository.findById(id).ifPresent(client -> {
+            deletedUserService.archiveUser(client, deletedBy, reason);
+            clientRepository.deleteById(id);
+        });
     }
 
     @Override
@@ -58,4 +69,5 @@ public class ClientService extends UserService<Client, UpdateClientDTO> {
                     return clientRepository.save(client);
                 });
     }
+
 }

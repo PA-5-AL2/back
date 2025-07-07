@@ -28,6 +28,9 @@ public abstract class UserService<T extends User, D> {
     }
 
     @Transactional
+    public abstract void deleteUserWithArchive(UUID id, String deletedBy, String reason);
+
+    @Transactional
     public abstract Optional<T> updateUser(UUID id, D dto);
 
     @Transactional
