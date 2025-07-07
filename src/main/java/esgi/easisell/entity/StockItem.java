@@ -1,3 +1,15 @@
+/**
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * PROJET EASISELL - PLATEFORME DE GESTION COMMERCIALE
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * @file        : StockItem.java
+ * @description : Entité lot de stock d'un produit
+ * @author      : Chancy MOUYABI
+ * @version     : v1.0.0
+ * @date        : 03/07/2025
+ * @package     : esgi.easisell.entity
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ */
 package esgi.easisell.entity;
 
 import jakarta.persistence.*;
@@ -39,4 +51,19 @@ public class StockItem {
     @JoinColumn(name = "supplier_id")
     @ToString.Exclude
     private Supplier supplier;
+
+    @Version
+    @Column(name = "version")
+    private Long version;
+
+    //Timestamp de dernière modification
+    @Column(name = "last_modified")
+    private Timestamp lastModified;
+
+    //Callback pour mettre à jour automatiquement le timestamp
+    @PreUpdate
+    @PrePersist
+    protected void onUpdate() {
+        this.lastModified = new Timestamp(System.currentTimeMillis());
+    }
 }

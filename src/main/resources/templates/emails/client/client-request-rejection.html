@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mise à jour de votre demande - EasiSell</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #FF6B35 0%, #FF8E53 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="30" r="1.5" fill="rgba(255,255,255,0.1)"/><circle cx="40" cy="70" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="90" cy="80" r="2.5" fill="rgba(255,255,255,0.1)"/></svg>');
+        }
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: #ffffff;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            font-weight: bold;
+            color: #FF6B35;
+            position: relative;
+            z-index: 1;
+        }
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .message-section {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .message-section h3 {
+            color: #856404;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        .reason-box {
+            background: white;
+            border-left: 4px solid #FF6B35;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .reason-box h4 {
+            color: #FF6B35;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        .reason-box h4::before {
+            content: '💬';
+            margin-right: 10px;
+        }
+        .contact-info {
+            background: #e8f5e8;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            margin: 30px 0;
+        }
+        .contact-info h3 {
+            color: #4CAF50;
+            margin-bottom: 15px;
+        }
+        .contact-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            margin: 10px;
+            transition: transform 0.3s ease;
+        }
+        .contact-button:hover {
+            transform: translateY(-2px);
+        }
+        .alternative-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+        }
+        .alternative-section h3 {
+            color: #666;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .alternative-list {
+            list-style: none;
+            padding: 0;
+        }
+        .alternative-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+        }
+        .alternative-list li:last-child {
+            border-bottom: none;
+        }
+        .alternative-list li::before {
+            content: '✓';
+            background: #4CAF50;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+        .footer {
+            background: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            color: #666;
+            border-top: 1px solid #e9ecef;
+        }
+        .footer p {
+            margin-bottom: 10px;
+        }
+        .social-links {
+            margin-top: 20px;
+        }
+        .social-links a {
+            color: #4CAF50;
+            text-decoration: none;
+            margin: 0 10px;
+            font-weight: bold;
+        }
+        @media (max-width: 600px) {
+            .email-container { margin: 10px; border-radius: 15px; }
+            .header { padding: 30px 20px; }
+            .content { padding: 30px 20px; }
+        }
+    </style>
+</head>
+<body>
+<div class="email-container">
+    <div class="header">
+        <div class="logo">E$</div>
+        <h1>Mise à jour de votre demande</h1>
+    </div>
+
+    <div class="content">
+        <div class="message-section">
+            <h3>Bonjour <span th:text="${request.contactName}">Contact</span>,</h3>
+            <p>Nous avons étudié avec attention votre demande de création de compte EasiSell pour <strong th:text="${request.companyName}">Entreprise</strong>.</p>
+        </div>
+
+        <div class="reason-box" th:if="${reason}">
+            <h4>Raison de notre décision</h4>
+            <p th:text="${reason}" style="color: #666; line-height: 1.6;">Raison du rejet...</p>
+        </div>
+
+        <div class="alternative-section">
+            <h3>💡 Nous restons à votre disposition</h3>
+            <p style="text-align: center; margin-bottom: 20px; color: #666;">
+                Cette décision ne ferme pas définitivement les portes. Voici comment nous pouvons vous aider :
+            </p>
+            <ul class="alternative-list">
+                <li>Discuter de votre projet et voir les adaptations possibles</li>
+                <li>Vous orienter vers des solutions alternatives</li>
+                <li>Vous tenir informé des évolutions de notre offre</li>
+                <li>Réétudier votre dossier selon vos nouveaux besoins</li>
+            </ul>
+        </div>
+
+        <div class="contact-info">
+            <h3>Contactez notre équipe</h3>
+            <p>Notre équipe commerciale reste disponible pour échanger avec vous</p>
+            <a href="mailto:info@easy-sell.net?subject=Re: Demande EasiSell" class="contact-button">
+                Nous écrire
+            </a>
+            <a href="tel:+33123456789" class="contact-button">
+                Nous appeler
+            </a>
+        </div>
+
+        <p style="text-align: center; color: #666; font-style: italic; margin-top: 30px;">
+            Merci pour l'intérêt que vous portez à EasiSell. Nous vous souhaitons beaucoup de succès dans vos projets.
+        </p>
+    </div>
+
+    <div class="footer">
+        <p><strong>EasiSell</strong> - La solution de gestion commerciale qui simplifie votre business</p>
+        <p>© 2025 EasiSell. Tous droits réservés.</p>
+        <div class="social-links">
+            <a href="mailto:info@easy-sell.net">Support</a>
+            <a href="#" th:href="${supportEmail}">Contact</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

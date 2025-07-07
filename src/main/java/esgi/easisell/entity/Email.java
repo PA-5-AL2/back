@@ -1,3 +1,15 @@
+/**
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * 🚀 PROJET EASISELL - PLATEFORME DE GESTION COMMERCIALE
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * @file        : Email.java
+ * @description : Entité modèle d'email du système
+ * @author      : Chancy MOUYABI
+ * @version     : v1.0.0
+ * @date        : 03/07/2025
+ * @package     : esgi.easisell.entity
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ */
 package esgi.easisell.entity;
 
 import jakarta.persistence.*;
@@ -28,10 +40,11 @@ public class Email {
     @Column(nullable = false)
     private String type;
 
+    @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private Timestamp createdAt;
 
     @OneToMany(mappedBy = "email", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
-    private List<EmailSend> emailSends;
+    private List<EmailSend> emailSends = new ArrayList<>();
 }

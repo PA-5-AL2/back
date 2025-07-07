@@ -3,129 +3,142 @@ Voici le diagramme Entité-Relation (ERD) représentant la structure de la base 
 
 ````mermaid
 erDiagram
-    AdminUser {
-        INT adminUserId PK
-        VARCHAR email UK "Email unique pour la connexion admin"
-        VARCHAR password
+    User {
+        UUID userId PK
+        VARCHAR username UK "Email de connexion"
+        VARCHAR password "Mot de passe hashé"
         VARCHAR firstName
-        VARCHAR userName
+        VARCHAR role "ADMIN|CLIENT"
+        TIMESTAMP createdAt
     }
-    
+
+    AdminUser {
+        UUID userId PK,FK "Hérite de User"
+    }
+
+
     Client {
-        INT clientId PK
-        VARCHAR name "Nom de la supérette/propriétaire"
-        VARCHAR email UK "Email unique pour la connexion client"
-        VARCHAR password
+        UUID userId PK,FK "Hérite de User"
+        VARCHAR name "Nom de la supérette"
         VARCHAR address
-        VARCHAR contractStatus "e.g., Actif/Résilié"
-        VARCHAR currencyPreference "e.g., EUR, USD, CAD / Dévive par défaut euros"
+        VARCHAR phone "Recommandé"
+        VARCHAR contractStatus "ACTIVE|SUSPENDED|CANCELLED"
+        VARCHAR currencyPreference "EUR|USD|CAD"
+        UUID adminUserId FK "Admin qui gère ce client"
     }
 
     Email {
-        INT emailId PK
+        UUID emailId PK
         TEXT content "Contenu du modèle"
         TIMESTAMP createdAt
         VARCHAR subject "Sujet"
-        VARCHAR type "Type (Rappel, Promotion)"
+        VARCHAR type "REMINDER|PROMOTION|CANCELLATION"
     }
 
     EmailSend {
-        INT emailSendId PK
-        INT emailId FK
-        INT clientId FK
+        UUID emailSendId PK
+        UUID emailId FK
+        UUID clientId FK
         TIMESTAMP sentAt
-        VARCHAR status
+        VARCHAR status "SENT|FAILED|PENDING"
         VARCHAR emailType "BACKUP|PROMOTION|REMINDER"
     }
 
     Supplier {
-        INT supplierId PK
+        UUID supplierId PK
         VARCHAR name
         VARCHAR contactInfo
-        INT clientId FK "Fournisseur lié à un Client"
+        VARCHAR phone "Recommandé"
+        UUID clientId FK "Fournisseur lié à un Client"
     }
 
     Category {
-        INT categoryId PK
+        UUID categoryId PK
         VARCHAR name "e.g., Boissons, Boulangerie, Fromages"
-        INT clientId FK "Catégorie liée à un Client"
+        UUID clientId FK "Catégorie liée à un Client"
     }
 
     Product {
-        INT productId PK
-        VARCHAR name "e.g., Pain baguette, Coca-Cola 1.5L, Fromage Emmental"
-        VARCHAR description
-        VARCHAR barcode UK "Nullable, Code-barres unique par client"
-        VARCHAR brand "e.g., Soumam, Danone / Marque"
+        UUID productId PK
+        VARCHAR name "e.g., Pain baguette, Coca-Cola 1.5L"
+        TEXT description
+        VARCHAR barcode "Nullable, unique par client"
+        VARCHAR brand "e.g., Soumam, Danone"
         DECIMAL unitPrice
-        INT categoryId FK
-        INT clientId FK "Products appartenant a un specific Client"
+        UUID categoryId FK
+        UUID clientId FK "Produit appartenant à un client"
     }
 
     StockItem {
-        INT stockItemId PK
-        INT productId FK
-        INT clientId FK "Stock appartenant a un specific Client"
-        INT quantity "Current quantity in stock"
+        UUID stockItemId PK
+        UUID productId FK
+        UUID clientId FK
+        INT quantity "Quantité actuelle"
         INT reorderThreshold "Seuil de réapprovisionnement"
-        TIMESTAMP purchaseDate "Optional: When the item was received"
-        TIMESTAMP expirationDate "Crucial pour les alertes"
-        DECIMAL purchasePrice "Optional: Cost price"
-        INT supplierId FK "Optional: Link to supplier"
+        TIMESTAMP purchaseDate "Date de réception"
+        TIMESTAMP expirationDate "Date de péremption"
+        DECIMAL purchasePrice "Prix d'achat"
+        UUID supplierId FK "Fournisseur de ce lot"
     }
 
     Sale {
-        INT saleId PK
-        INT clientId FK
+        UUID saleId PK
+        UUID clientId FK
         TIMESTAMP saleTimestamp
         DECIMAL totalAmount
         BOOLEAN isDeferred "Paiement différé"
     }
 
     SaleItem {
-        INT saleItemId PK
-        INT saleId FK
-        INT productId FK
+        UUID saleItemId PK
+        UUID saleId FK
+        UUID productId FK
         INT quantitySold
         DECIMAL priceAtSale
     }
 
     Promotion {
-        INT promotionId PK
-        INT productId FK "Promotion applies to a specific Product"
-        INT clientId FK "Promotion belongs to a specific Client"
-        VARCHAR promotionCode "Code unique (ex: TOMATE20)"
+        UUID promotionId PK
+        UUID productId FK "Produit concerné"
+        UUID clientId FK "Client propriétaire"
+        VARCHAR promotionCode UK "Code unique"
         VARCHAR description "e.g., Vente flash Tomates"
-        VARCHAR discountType "PERCENT or FIXED"
+        VARCHAR discountType "PERCENT|FIXED"
         DECIMAL discountValue
         TIMESTAMP startDate
         TIMESTAMP endDate
     }
 
     Payment {
-        INT paymentId PK
-        INT saleId FK
-        VARCHAR type "Espèces, Carte..."
+        UUID paymentId PK
+        UUID saleId FK
+        VARCHAR type "CASH|CARD|CHECK"
         DECIMAL amount
-        VARCHAR currency "Devise utilisée (ex: EUR)"
+        VARCHAR currency "EUR|USD|CAD"
+        TIMESTAMP paymentDate "Recommandé"
     }
 
-    AdminUser ||--o{ Client : "Gère"
-    Client ||--o{ EmailSend : "Reçoit"
-    Email ||--o{ EmailSend : "Utilisé_dans"
-    Client ||--o{ Supplier : "Gère"
-    Client ||--o{ Category : "Définit"
-    Client ||--o{ Product : "Possède"
-    Client ||--o{ StockItem : "Stocke"
-    Client ||--o{ Sale : "Génère"
-    Client ||--o{ Promotion : "Crée"
-    Category ||--o{ Product : "Contient"
-    Supplier ||--o{ StockItem : "Approvisionne"
-    Product ||--o{ StockItem : "Lot en stock"
-    Product ||--o{ SaleItem : "Vendu dans"
-    Product ||--o{ Promotion : "Promotion applicable"
-    Sale ||--o{ SaleItem : "Inclut"
-    Sale ||--o{ Payment : "Paiements associés"
+%% Héritage
+    User ||--|| AdminUser : "est un"
+    User ||--|| Client : "est un"
+
+%% Relations
+    AdminUser ||--o{ Client : "gère"
+    Client ||--o{ EmailSend : "reçoit"
+    Email ||--o{ EmailSend : "utilisé dans"
+    Client ||--o{ Supplier : "possède"
+    Client ||--o{ Category : "définit"
+    Client ||--o{ Product : "vend"
+    Client ||--o{ StockItem : "stocke"
+    Client ||--o{ Sale : "effectue"
+    Client ||--o{ Promotion : "crée"
+    Category ||--o{ Product : "contient"
+    Supplier ||--o{ StockItem : "fournit"
+    Product ||--o{ StockItem : "en stock"
+    Product ||--o{ SaleItem : "vendu dans"
+    Product ||--o{ Promotion : "bénéficie de"
+    Sale ||--o{ SaleItem : "inclut"
+    Sale ||--o{ Payment : "payé par"
 ````
 
 AdminUser -- manages --> Client : "Manages (Logical Link)"

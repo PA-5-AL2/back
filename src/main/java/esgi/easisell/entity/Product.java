@@ -1,3 +1,15 @@
+/**
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * 🚀 PROJET EASISELL - PLATEFORME DE GESTION COMMERCIALE
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * @file        : Product.java
+ * @description : Entité produit commercialisé
+ * @author      : Chancy MOUYABI
+ * @version     : v1.0.0
+ * @date        : 03/07/2025
+ * @package     : esgi.easisell.entity
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ */
 package esgi.easisell.entity;
 
 import jakarta.persistence.*;
@@ -10,7 +22,10 @@ import java.util.*;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "PRODUCT")
+@Table(name = "PRODUCT",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"client_id", "barcode"})
+        })
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -23,10 +38,10 @@ public class Product {
     @Lob
     private String description;
 
-    @Column(unique = true)
+    @Column(name = "barcode")
     private String barcode;
 
-    private String brand;
+    private String brand; // MARQUE : CACO...
 
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal unitPrice;

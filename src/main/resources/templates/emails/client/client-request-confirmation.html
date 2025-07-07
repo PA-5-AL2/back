@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Demande reçue - EasiSell</title>
+</head>
+<body>
+<div class="header">
+    <h1>Merci pour votre intérêt pour EasiSell !</h1>
+</div>
+
+<div class="content">
+    <p>Bonjour <span th:text="${request.contactName}"></span>,</p>
+
+    <p>Nous avons bien reçu votre demande de création de compte pour <strong th:text="${request.companyName}"></strong>.</p>
+
+    <p>Notre équipe va examiner votre demande et vous contacter dans les plus brefs délais.</p>
+
+    <p>Récapitulatif de votre demande :</p>
+    <ul>
+        <li>Date de la demande : <span th:text="${#temporals.format(request.requestDate, 'dd/MM/yyyy à HH:mm')}"></span></li>
+        <li>Numéro de référence : <span th:text="${request.requestId}"></span></li>
+    </ul>
+</div>
+</body>
+</html>
