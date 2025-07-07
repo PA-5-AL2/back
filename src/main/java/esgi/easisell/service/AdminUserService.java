@@ -5,6 +5,7 @@ import esgi.easisell.dto.ChangePasswordDTO;
 import esgi.easisell.dto.UpdateAdminDTO;
 import esgi.easisell.entity.AdminUser;
 import esgi.easisell.repository.AdminUserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -19,10 +20,20 @@ public class AdminUserService extends UserService<AdminUser, UpdateAdminDTO> {
 
     private final AdminUserRepository adminUserRepository;
     private final PasswordEncoder passwordEncoder;
+    private final DeletedUserService deletedUserService;
 
     @Override
     protected JpaRepository<AdminUser, UUID> getRepository() {
         return adminUserRepository;
+    }
+
+    @Override
+    @Transactional
+    public void deleteUserWithArchive(UUID id, String deletedBy, String reason) {
+        adminUserRepository.findById(id).ifPresent(admin -> {
+            deletedUserService.archiveUser(admin, deletedBy, reason);
+            adminUserRepository.deleteById(id);
+        });
     }
 
     @Override
@@ -62,4 +73,5 @@ public class AdminUserService extends UserService<AdminUser, UpdateAdminDTO> {
                     return adminUserRepository.save(admin);
                 });
     }
+
 }

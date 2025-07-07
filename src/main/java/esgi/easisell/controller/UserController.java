@@ -3,11 +3,14 @@ package esgi.easisell.controller;
 import esgi.easisell.dto.*;
 import esgi.easisell.entity.AdminUser;
 import esgi.easisell.entity.Client;
+import esgi.easisell.entity.DeletedUser;
 import esgi.easisell.service.AdminUserService;
 import esgi.easisell.service.ClientService;
+import esgi.easisell.service.DeletedUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
 
 import java.util.List;
 import java.util.UUID;
@@ -20,6 +23,7 @@ public class UserController {
 
     private final ClientService clientService;
     private final AdminUserService adminUserService;
+    private final DeletedUserService deletedUserService;
 
     @GetMapping("/clients")
     public ResponseEntity<List<ClientResponseDTO>> getAllClients() {
@@ -53,20 +57,28 @@ public class UserController {
     }
 
     @DeleteMapping("/clients/{id}")
-    public ResponseEntity<Void> deleteClient(@PathVariable UUID id) {
+    public ResponseEntity<Void> deleteClient(@PathVariable UUID id,
+                                             @RequestParam(required = false) String reason,
+                                             Authentication authentication) {
         if (!clientService.getUserById(id).isPresent()) {
             return ResponseEntity.notFound().build();
         }
-        clientService.deleteUser(id);
+
+        String deletedBy = authentication.getName();
+        clientService.deleteUserWithArchive(id, deletedBy, reason != null ? reason : "Suppression manuelle");
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/admins/{id}")
-    public ResponseEntity<Void> deleteAdmin(@PathVariable UUID id) {
+    public ResponseEntity<Void> deleteAdmin(@PathVariable UUID id,
+                                            @RequestParam(required = false) String reason,
+                                            Authentication authentication) {
         if (!adminUserService.getUserById(id).isPresent()) {
             return ResponseEntity.notFound().build();
         }
-        adminUserService.deleteUser(id);
+
+        String deletedBy = authentication.getName();
+        adminUserService.deleteUserWithArchive(id, deletedBy, reason != null ? reason : "Suppression manuelle");
         return ResponseEntity.noContent().build();
     }
 
@@ -125,5 +137,24 @@ public class UserController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Erreur lors de la modification");
         }
+    }
+    @GetMapping("/deleted")
+    public ResponseEntity<List<DeletedUser>> getAllDeletedUsers() {
+        return ResponseEntity.ok(deletedUserService.getAllDeletedUsers());
+    }
+
+    @GetMapping("/deleted/clients")
+    public ResponseEntity<List<DeletedUser>> getDeletedClients() {
+        return ResponseEntity.ok(deletedUserService.getDeletedUsersByType("CLIENT"));
+    }
+
+    @GetMapping("/deleted/admins")
+    public ResponseEntity<List<DeletedUser>> getDeletedAdmins() {
+        return ResponseEntity.ok(deletedUserService.getDeletedUsersByType("ADMIN"));
+    }
+
+    @GetMapping("/deleted/by/{username}")
+    public ResponseEntity<List<DeletedUser>> getDeletedUsersByDeleter(@PathVariable String username) {
+        return ResponseEntity.ok(deletedUserService.getDeletedUsersByDeleter(username));
     }
 }
