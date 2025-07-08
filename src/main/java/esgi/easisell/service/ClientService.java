@@ -69,5 +69,36 @@ public class ClientService extends UserService<Client, UpdateClientDTO> {
                     return clientRepository.save(client);
                 });
     }
+    @Transactional
+    public Optional<Client> regenerateAccessCode(UUID clientId) {
+        return clientRepository.findById(clientId)
+                .map(client -> {
+                    client.setAccessCode(generateRandomCode());
+                    return clientRepository.save(client);
+                });
+    }
+
+    public boolean verifyAccessCode(UUID clientId, String accessCode) {
+        return clientRepository.findById(clientId)
+                .map(client -> client.getAccessCode().equals(accessCode))
+                .orElse(false);
+    }
+
+    public Optional<String> getAccessCode(UUID clientId) {
+        return clientRepository.findById(clientId)
+                .map(Client::getAccessCode);
+    }
+
+    private String generateRandomCode() {
+        return UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    }
+    @Transactional
+    public Optional<Client> setCustomAccessCode(UUID clientId, String customCode) {
+        return clientRepository.findById(clientId)
+                .map(client -> {
+                    client.setAccessCode(customCode.toUpperCase());
+                    return clientRepository.save(client);
+                });
+    }
 
 }

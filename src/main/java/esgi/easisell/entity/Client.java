@@ -65,4 +65,7 @@ public class Client extends User {
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
     private List<Promotion> promotions = new ArrayList<>(); // MANQUANT
+
+    @Column(name = "access_code", nullable = false, unique = true)
+    private String accessCode;
 }

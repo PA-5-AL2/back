@@ -47,5 +47,17 @@ public abstract class User {
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
+
+        if (this instanceof Client) {
+            Client client = (Client) this;
+            if (client.getAccessCode() == null) {
+                client.setAccessCode(generateRandomCode());
+            }
+        }
     }
+
+    private String generateRandomCode() {
+        return UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    }
+
 }

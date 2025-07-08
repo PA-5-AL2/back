@@ -14,9 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -191,5 +189,49 @@ public class UserController {
     @GetMapping("/deleted/by/{username}")
     public ResponseEntity<List<DeletedUser>> getDeletedUsersByDeleter(@PathVariable String username) {
         return ResponseEntity.ok(deletedUserService.getDeletedUsersByDeleter(username));
+    }
+    @GetMapping("/clients/{id}/access-code")
+    public ResponseEntity<AccessCodeDTO> getClientAccessCode(@PathVariable UUID id) {
+        return clientService.getAccessCode(id)
+                .map(code -> {
+                    AccessCodeDTO dto = new AccessCodeDTO();
+                    dto.setAccessCode(code);
+                    return ResponseEntity.ok(dto);
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/clients/{id}/access-code/regenerate")
+    public ResponseEntity<AccessCodeDTO> regenerateClientAccessCode(@PathVariable UUID id) {
+        return clientService.regenerateAccessCode(id)
+                .map(client -> {
+                    AccessCodeDTO dto = new AccessCodeDTO();
+                    dto.setAccessCode(client.getAccessCode());
+                    return ResponseEntity.ok(dto);
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/clients/{id}/verify-access-code")
+    public ResponseEntity<Map<String, Boolean>> verifyAccessCode(
+            @PathVariable UUID id,
+            @RequestBody AccessCodeDTO dto) {
+        boolean isValid = clientService.verifyAccessCode(id, dto.getAccessCode());
+        Map<String, Boolean> response = new HashMap<>();
+        response.put("valid", isValid);
+        return ResponseEntity.ok(response);
+    }
+    // Client définit son propre code d'accès
+    @PutMapping("/clients/{id}/access-code/custom")
+    public ResponseEntity<AccessCodeDTO> setCustomAccessCode(
+            @PathVariable UUID id,
+            @RequestBody AccessCodeDTO dto) {
+        return clientService.setCustomAccessCode(id, dto.getAccessCode())
+                .map(client -> {
+                    AccessCodeDTO response = new AccessCodeDTO();
+                    response.setAccessCode(client.getAccessCode());
+                    return ResponseEntity.ok(response);
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 }
