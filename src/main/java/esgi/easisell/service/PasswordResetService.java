@@ -53,18 +53,18 @@ public class PasswordResetService {
             User user = userRepository.findByUsername(email);
 
             if (user == null) {
-                log.warn("⚠️ Utilisateur non trouvé pour l'email: {}", email);
+                log.warn("Utilisateur non trouvé pour l'email: {}", email);
                 return false;
             }
 
             // Envoyer email de notification aux admins
             notifyAdminsPasswordReset(user);
 
-            log.info("✅ Demande de réinitialisation traitée pour: {}", email);
+            log.info("Demande de réinitialisation traitée pour: {}", email);
             return true;
 
         } catch (Exception e) {
-            log.error("❌ Erreur lors du traitement de la demande de réinitialisation", e);
+            log.error("Erreur lors du traitement de la demande de réinitialisation", e);
             return false;
         }
     }
@@ -89,11 +89,11 @@ public class PasswordResetService {
             // Envoyer email de confirmation à l'utilisateur
             sendPasswordChangedConfirmation(user);
 
-            log.info("✅ Notification de changement envoyée à: {}", email);
+            log.info("Notification de changement envoyée à: {}", email);
             return true;
 
         } catch (Exception e) {
-            log.error("❌ Erreur lors de l'envoi de la notification", e);
+            log.error("Erreur lors de l'envoi de la notification", e);
             return false;
         }
     }
@@ -130,10 +130,10 @@ public class PasswordResetService {
                         variables
                 );
 
-                log.info("📧 Email envoyé à l'admin: {}", adminEmail);
+                log.info("Email envoyé à l'admin: {}", adminEmail);
 
             } catch (EmailException e) {
-                log.error("❌ Erreur envoi email admin: {}", adminEmail, e);
+                log.error("Erreur envoi email admin: {}", adminEmail, e);
             }
         }
     }
@@ -167,7 +167,7 @@ public class PasswordResetService {
             );
 
         } catch (EmailException e) {
-            log.error("❌ Erreur envoi confirmation changement mot de passe", e);
+            log.error("Erreur envoi confirmation changement mot de passe", e);
             throw new RuntimeException("Erreur lors de l'envoi de l'email de confirmation", e);
         }
     }
