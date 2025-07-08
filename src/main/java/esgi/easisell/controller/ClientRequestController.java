@@ -178,24 +178,4 @@ public class ClientRequestController {
             ));
         }
     }
-
-    /**
-     * ADMIN ONLY - Statistiques des demandes
-     */
-    @GetMapping("/stats")
-    public ResponseEntity<?> getRequestsStats(HttpServletRequest request) {
-        if (!securityUtils.isCurrentUserAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("error", "Accès réservé aux administrateurs"));
-        }
-
-        try {
-            Map<String, Object> stats = clientRequestService.getRequestsStatistics();
-            return ResponseEntity.ok(stats);
-        } catch (Exception e) {
-            log.error("Erreur lors de la récupération des statistiques", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Erreur lors de la récupération des statistiques"));
-        }
-    }
 }
