@@ -7,23 +7,28 @@ import esgi.easisell.entity.DeletedUser;
 import esgi.easisell.service.AdminUserService;
 import esgi.easisell.service.ClientService;
 import esgi.easisell.service.DeletedUserService;
+import esgi.easisell.service.PasswordResetService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
+@Slf4j
 public class UserController {
 
     private final ClientService clientService;
     private final AdminUserService adminUserService;
     private final DeletedUserService deletedUserService;
+    private final PasswordResetService passwordResetService;
 
     @GetMapping("/clients")
     public ResponseEntity<List<ClientResponseDTO>> getAllClients() {
@@ -117,13 +122,28 @@ public class UserController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
     @PutMapping("/admin/clients/{id}/password")
     public ResponseEntity<String> adminChangeClientPassword(@PathVariable UUID id, @RequestBody AdminChangePasswordDTO dto) {
         try {
-            return clientService.adminChangePassword(id, dto)
-                    .map(client -> ResponseEntity.ok("Mot de passe du client modifié avec succès"))
-                    .orElse(ResponseEntity.notFound().build());
+            Optional<Client> clientOpt = clientService.adminChangePassword(id, dto);
+
+            if (clientOpt.isPresent()) {
+                // 📧 Envoyer email de notification à l'utilisateur
+                try {
+                    passwordResetService.notifyPasswordChanged(clientOpt.get().getUsername());
+                    log.info("📧 Email de confirmation envoyé au client: {}", clientOpt.get().getUsername());
+                } catch (Exception emailError) {
+                    log.error("❌ Erreur envoi email confirmation changement mot de passe", emailError);
+                    // On continue même si l'email échoue
+                }
+
+                return ResponseEntity.ok("Mot de passe du client modifié avec succès et email de confirmation envoyé");
+            } else {
+                return ResponseEntity.notFound().build();
+            }
         } catch (Exception e) {
+            log.error("Erreur lors de la modification du mot de passe client", e);
             return ResponseEntity.badRequest().body("Erreur lors de la modification");
         }
     }
@@ -131,13 +151,28 @@ public class UserController {
     @PutMapping("/admin/admins/{id}/password")
     public ResponseEntity<String> adminChangeAdminPassword(@PathVariable UUID id, @RequestBody AdminChangePasswordDTO dto) {
         try {
-            return adminUserService.adminChangePassword(id, dto)
-                    .map(admin -> ResponseEntity.ok("Mot de passe de l'admin modifié avec succès"))
-                    .orElse(ResponseEntity.notFound().build());
+            Optional<AdminUser> adminOpt = adminUserService.adminChangePassword(id, dto);
+
+            if (adminOpt.isPresent()) {
+                // 📧 Envoyer email de notification à l'utilisateur
+                try {
+                    passwordResetService.notifyPasswordChanged(adminOpt.get().getUsername());
+                    log.info("📧 Email de confirmation envoyé à l'admin: {}", adminOpt.get().getUsername());
+                } catch (Exception emailError) {
+                    log.error("❌ Erreur envoi email confirmation changement mot de passe", emailError);
+                    // On continue même si l'email échoue
+                }
+
+                return ResponseEntity.ok("Mot de passe de l'admin modifié avec succès et email de confirmation envoyé");
+            } else {
+                return ResponseEntity.notFound().build();
+            }
         } catch (Exception e) {
+            log.error("Erreur lors de la modification du mot de passe admin", e);
             return ResponseEntity.badRequest().body("Erreur lors de la modification");
         }
     }
+
     @GetMapping("/deleted")
     public ResponseEntity<List<DeletedUser>> getAllDeletedUsers() {
         return ResponseEntity.ok(deletedUserService.getAllDeletedUsers());
