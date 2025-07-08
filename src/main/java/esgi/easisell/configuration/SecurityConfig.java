@@ -49,6 +49,9 @@ public class SecurityConfig {
                                 .requestMatchers("/api/test/**").permitAll()
                                 .requestMatchers("/api/client-requests/submit").permitAll()
                                 .requestMatchers("/api/public/**").permitAll()
+                                .requestMatchers("/api/password-reset/request").permitAll()
+                                .requestMatchers("/api/password-reset/changed-notification").permitAll()
+                                .requestMatchers("/api/password-reset/status").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/").permitAll()
                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 

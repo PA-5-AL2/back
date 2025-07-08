@@ -16,6 +16,24 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * PROJET EASISELL - PLATEFORME DE GESTION COMMERCIALE
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * @file        : CategoryController.java
+ * @description : Contrôleur REST pour la gestion des catégories de produits
+ * @author      : Chancy MOUYABI
+ * @version     : v1.0.0
+ * @date        : 15/05/2025
+ * @package     : esgi.easisell.controller
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ *
+ * Ce contrôleur expose les endpoints REST pour la gestion des catégories :
+ * - CRUD complet (Create, Read, Update, Delete)
+ * - Recherche par nom
+ * - Mise à jour partielle (PATCH)
+ * - Filtrage par client
+ */
 @RestController
 @RequestMapping("/api/categories")
 @RequiredArgsConstructor
@@ -26,6 +44,10 @@ public class CategoryController {
 
     /**
      * Créer une nouvelle catégorie
+     * POST /api/categories
+     *
+     * @param categoryDTO les données de la catégorie à créer
+     * @return la catégorie créée ou message d'erreur
      */
     @PostMapping
     public ResponseEntity<?> createCategory(@RequestBody CategoryDTO categoryDTO) {
@@ -40,7 +62,12 @@ public class CategoryController {
     }
 
     /**
-     * Récupérer toutes les catégories
+     * Récupérer toutes les catégories du système
+     * GET /api/categories
+     *
+     * ATTENTION : Endpoint admin - retourne TOUTES les catégories
+     *
+     * @return la liste complète des catégories
      */
     @GetMapping
     public ResponseEntity<List<CategoryResponseDTO>> getAllCategories() {
@@ -52,6 +79,12 @@ public class CategoryController {
 
     /**
      * Récupérer les catégories d'un client spécifique
+     * GET /api/categories/client/{clientId}
+     *
+     * Endpoint principal pour les supérettes
+     *
+     * @param clientId l'identifiant du client propriétaire
+     * @return la liste des catégories de ce client
      */
     @GetMapping("/client/{clientId}")
     public ResponseEntity<List<CategoryResponseDTO>> getCategoriesByClient(@PathVariable UUID clientId) {
@@ -62,7 +95,11 @@ public class CategoryController {
     }
 
     /**
-     * Récupérer une catégorie par ID
+     * Récupérer une catégorie par son identifiant
+     * GET /api/categories/{categoryId}
+     *
+     * @param categoryId l'identifiant unique de la catégorie
+     * @return la catégorie trouvée ou 404 si inexistante
      */
     @GetMapping("/{categoryId}")
     public ResponseEntity<?> getCategoryById(@PathVariable UUID categoryId) {
@@ -72,7 +109,14 @@ public class CategoryController {
     }
 
     /**
-     * Mettre à jour une catégorie
+     * Mettre à jour une catégorie existante
+     * PUT /api/categories/{categoryId}
+     *
+     * Note : Mise à jour complète (tous les champs)
+     *
+     * @param categoryId l'identifiant de la catégorie à modifier
+     * @param categoryDTO les nouvelles données de la catégorie
+     * @return la catégorie mise à jour ou erreur
      */
     @PutMapping("/{categoryId}")
     public ResponseEntity<?> updateCategory(@PathVariable UUID categoryId,
@@ -89,7 +133,13 @@ public class CategoryController {
     }
 
     /**
-     * Supprimer une catégorie
+     * Supprimer une catégorie du système
+     * DELETE /api/categories/{categoryId}
+     *
+     * ⚠️ ATTENTION : Suppression définitive (cascade sur produits associés)
+     *
+     * @param categoryId l'identifiant de la catégorie à supprimer
+     * @return confirmation de suppression ou 404 si inexistante
      */
     @DeleteMapping("/{categoryId}")
     public ResponseEntity<?> deleteCategory(@PathVariable UUID categoryId) {
@@ -103,6 +153,13 @@ public class CategoryController {
 
     /**
      * Rechercher des catégories par nom
+     * GET /api/categories/search?clientId={id}&name={texte}
+     *
+     * 🔍 Recherche insensible à la casse avec LIKE %texte%
+     *
+     * @param clientId l'identifiant du client (scope de recherche)
+     * @param name le texte à rechercher dans le nom de la catégorie
+     * @return la liste des catégories correspondantes
      */
     @GetMapping("/search")
     public ResponseEntity<List<CategoryResponseDTO>> searchCategoriesByName(
@@ -115,7 +172,14 @@ public class CategoryController {
     }
 
     /**
-     * Mettre à jour partiellement une catégorie (PATCH)
+     * Mettre à jour partiellement une catégorie
+     * PATCH /api/categories/{categoryId}
+     *
+     * ✏️ Mise à jour partielle - modifie seulement les champs fournis
+     *
+     * @param categoryId l'identifiant de la catégorie à modifier
+     * @param updates les champs à mettre à jour (format clé-valeur)
+     * @return la catégorie mise à jour ou erreur
      */
     @PatchMapping("/{categoryId}")
     public ResponseEntity<?> patchCategory(@PathVariable UUID categoryId,
@@ -149,6 +213,9 @@ public class CategoryController {
 
     /**
      * Convertir une entité Category en DTO
+     *
+     * @param category l'entité à convertir
+     * @return le DTO correspondant
      */
     private CategoryResponseDTO convertToResponseDTO(Category category) {
         CategoryResponseDTO dto = new CategoryResponseDTO();

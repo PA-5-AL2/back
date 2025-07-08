@@ -11,6 +11,23 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * PROJET EASISELL - PLATEFORME DE GESTION COMMERCIALE
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * @file        : AuthController.java
+ * @description : Contrôleur REST pour l'authentification et l'inscription
+ * @author      : Samira SEDDAR
+ * @version     : v1.0.0
+ * @date        : 01/07/2025
+ * @package     : esgi.easisell.controller
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ *
+ * Ce contrôleur expose les endpoints publics pour :
+ * - Inscription des nouveaux utilisateurs (clients et admins)
+ * - Authentification et génération de tokens JWT
+ * - Envoi automatique d'emails de bienvenue
+ */
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -20,6 +37,15 @@ public class AuthController {
     private final AuthService authService;
     private final EmailService emailService;
 
+    /**
+     * Inscrire un nouvel utilisateur dans le système
+     * POST /api/auth/register
+     *
+     * Envoi automatique d'email de bienvenue pour les clients
+     *
+     * @param authDTO les données d'inscription (username, password, role, etc.)
+     * @return l'utilisateur créé ou message d'erreur
+     */
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody AuthDTO authDTO) {
         if (!authService.isUsernameAvailable(authDTO.getUsername())) {
@@ -41,6 +67,15 @@ public class AuthController {
         }
     }
 
+    /**
+     * Authentifier un utilisateur et générer un token JWT
+     * POST /api/auth/login
+     *
+     * Retourne un token JWT valide pour les requêtes authentifiées
+     *
+     * @param authDTO les identifiants de connexion (username, password)
+     * @return token JWT et informations utilisateur ou erreur 401
+     */
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthDTO authDTO) {
         try {
