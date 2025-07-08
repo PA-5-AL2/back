@@ -67,9 +67,13 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.PUT, "/api/users/admin/clients/*/password").hasRole("ADMIN")
                                 .requestMatchers(HttpMethod.PUT, "/api/users/admin/admins/*/password").hasRole("ADMIN")
 
+                                .requestMatchers(HttpMethod.GET, "/api/users/clients/*/access-code").hasAnyRole("CLIENT", "ADMIN")
+                                .requestMatchers(HttpMethod.PUT, "/api/users/clients/*/access-code/regenerate").hasAnyRole("CLIENT", "ADMIN")
+                                .requestMatchers(HttpMethod.POST, "/api/users/clients/*/verify-access-code").hasAnyRole("CLIENT", "ADMIN")
+                                .requestMatchers(HttpMethod.PUT, "/api/users/clients/*/access-code/custom").hasAnyRole("CLIENT", "ADMIN")
+
                                 .requestMatchers("/api/users/**").hasRole("ADMIN")
 
-                                // TOUS LES AUTRES endpoints nécessitent une authentification
                                 .anyRequest().authenticated())
                 .addFilterBefore(new JwtFilter(customUserDetailsService,jwtUtils), UsernamePasswordAuthenticationFilter.class)
                 .build();
