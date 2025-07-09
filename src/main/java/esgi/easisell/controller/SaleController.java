@@ -95,7 +95,7 @@ public class SaleController {
     public ResponseEntity<?> scanProduct(
             @PathVariable UUID saleId,
             @RequestParam String barcode,
-            @RequestParam(defaultValue = "1") int quantity,
+            @RequestParam(defaultValue = "1") BigDecimal quantity,
             HttpServletRequest request) {
 
         log.info("Scan du produit {} pour la vente {}", barcode, saleId);
@@ -124,7 +124,7 @@ public class SaleController {
     public ResponseEntity<?> addProductById(
             @PathVariable UUID saleId,
             @PathVariable UUID productId,
-            @RequestParam(defaultValue = "1") int quantity,
+            @RequestParam(defaultValue = "1") BigDecimal quantity,
             HttpServletRequest request) {
 
         log.info("Ajout manuel du produit {} à la vente {}", productId, saleId);
@@ -151,7 +151,7 @@ public class SaleController {
     @PutMapping("/items/{saleItemId}")
     public ResponseEntity<?> updateItemQuantity(
             @PathVariable UUID saleItemId,
-            @RequestParam int quantity,
+            @RequestParam BigDecimal quantity,
             HttpServletRequest request) {
 
         log.info("Mise à jour de la quantité de l'article {} à {}", saleItemId, quantity);
@@ -403,7 +403,7 @@ public class SaleController {
     public ResponseEntity<?> checkProductAvailability(
             @RequestParam UUID productId,
             @RequestParam UUID clientId,
-            @RequestParam int quantity,
+            @RequestParam BigDecimal quantity,
             HttpServletRequest request) {
 
         if (!securityUtils.canAccessClientData(clientId, request)) {

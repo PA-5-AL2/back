@@ -39,7 +39,6 @@ public class StatisticsService {
         }
     }
 
-
     public StatisticsDto getStatistics(UUID clientId, StatisticsPeriod period) {
         LocalDate endDate = LocalDate.now();
         LocalDate startDate = calculateStartDate(endDate, period);
@@ -49,7 +48,6 @@ public class StatisticsService {
 
         return calculateStatisticsForPeriod(clientId, startDate, endDate, period, null);
     }
-
 
     public StatisticsDto getStatisticsForDateRange(UUID clientId, LocalDate startDate, LocalDate endDate) {
         log.info("Calcul des statistiques pour le client {} sur la période personnalisée {} à {}",
@@ -96,10 +94,11 @@ public class StatisticsService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+    // ✅ FIX LIGNE 102 - Conversion BigDecimal vers int pour summingInt
     private Integer calculateTotalVolume(List<Sale> sales) {
         return sales.stream()
                 .flatMap(sale -> sale.getSaleItems().stream())
-                .mapToInt(SaleItem::getQuantitySold)
+                .mapToInt(item -> item.getQuantitySold().intValue())  // ✅ FIX : Conversion BigDecimal vers int
                 .sum();
     }
 
@@ -157,12 +156,13 @@ public class StatisticsService {
                 .build();
     }
 
+    // ✅ FIX LIGNE 165 - Conversion BigDecimal vers int pour summingInt
     private String findTopProductId(List<Sale> sales) {
         return sales.stream()
                 .flatMap(sale -> sale.getSaleItems().stream())
                 .collect(Collectors.groupingBy(
                         item -> item.getProduct().getProductId().toString(),
-                        Collectors.summingInt(SaleItem::getQuantitySold)
+                        Collectors.summingInt(item -> item.getQuantitySold().intValue())  // ✅ FIX : Conversion BigDecimal vers int
                 ))
                 .entrySet()
                 .stream()
@@ -179,7 +179,6 @@ public class StatisticsService {
 
         return calculateStatisticsForPeriod(clientId, startDate, endDate, null, sales);
     }
-
 
     private record StatisticsCalculation(BigDecimal averageRevenue, Integer averageVolume, Integer numberOfPeriods) {}
 }

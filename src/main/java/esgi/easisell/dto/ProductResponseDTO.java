@@ -22,6 +22,10 @@ public class ProductResponseDTO {
     private String clientUsername;
     private String clientFirstName;
 
+    private Boolean isSoldByWeight;
+    private String unitLabel;
+    private String formattedPrice;
+
     public ProductResponseDTO(esgi.easisell.entity.Product product) {
         this.productId = product.getProductId();
         this.name = product.getName();

@@ -12,4 +12,7 @@ public class ProductDTO {
     private BigDecimal unitPrice;
     private String categoryId;
     private String clientId;
+    private Boolean isSoldByWeight = false;
+    private String unitLabel = "pièce";
+
 }

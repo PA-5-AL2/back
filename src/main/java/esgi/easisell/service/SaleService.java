@@ -71,7 +71,7 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
     // ========== GESTION DES ARTICLES AVEC VALIDATION DE STOCK ==========
     @Override
     @Transactional
-    public SaleItemResponseDTO addProductToSale(UUID saleId, String barcode, int quantity) {
+    public SaleItemResponseDTO addProductToSale(UUID saleId, String barcode, BigDecimal quantity) {
         log.info("🔍 Scan du produit {} (quantité: {}) pour la vente {}", barcode, quantity, saleId);
 
         Sale sale = findSaleOrThrow(saleId);
@@ -89,7 +89,7 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
 
     @Override
     @Transactional
-    public SaleItemResponseDTO addProductByIdToSale(UUID saleId, UUID productId, int quantity) {
+    public SaleItemResponseDTO addProductByIdToSale(UUID saleId, UUID productId, BigDecimal quantity) {
         log.info("➕ Ajout manuel du produit {} (quantité: {}) à la vente {}", productId, quantity, saleId);
 
         Sale sale = findSaleOrThrow(saleId);
@@ -105,8 +105,8 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
 
     @Override
     @Transactional
-    public SaleItemResponseDTO updateItemQuantity(UUID saleItemId, int newQuantity) {
-        if (newQuantity <= 0) {
+    public SaleItemResponseDTO updateItemQuantity(UUID saleItemId, BigDecimal newQuantity) {
+        if (newQuantity.compareTo(BigDecimal.ZERO) <= 0) {
             throw new InvalidQuantityException("La quantité doit être supérieure à 0");
         }
 
@@ -116,7 +116,7 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
         saleValidationService.validateSaleNotFinalized(saleItem.getSale());
 
         // ✅ VALIDATION AVEC LE SERVICE OPTIMISTE
-        validateStockAvailability(saleItem.getProduct(), saleItem.getSale().getClient().getUserId(), newQuantity);
+        validateStockAvailability(saleItem.getProduct(), saleItem.getSale().getClient().getUserId(), newQuantity.intValue());
 
         saleItem.setQuantitySold(newQuantity);
         saleItem.setPriceAtSale(priceCalculator.calculateItemPrice(
@@ -260,7 +260,7 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
                 if (!optimisticStockService.reserveStock(
                         saleItem.getProduct().getProductId(),
                         sale.getClient().getUserId(),
-                        saleItem.getQuantitySold())) {
+                        saleItem.getQuantitySold().intValue())) { // ✅ FIX : conversion vers int
                     return false;
                 }
             }
@@ -291,9 +291,9 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
     /**
      * ✅ AJOUT DE PRODUIT AVEC VALIDATION OPTIMISTE
      */
-    private SaleItemResponseDTO addProductInternal(Sale sale, Product product, int quantity) {
+    private SaleItemResponseDTO addProductInternal(Sale sale, Product product, BigDecimal quantity) {
         // 1. Validation immédiate du stock disponible
-        validateStockAvailability(product, sale.getClient().getUserId(), quantity);
+        validateStockAvailability(product, sale.getClient().getUserId(), quantity.intValue());
 
         Optional<SaleItem> existingItem = findExistingItem(sale, product);
 
@@ -325,14 +325,14 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
     /**
      * ✅ MISE À JOUR D'ARTICLE EXISTANT AVEC VALIDATION
      */
-    private SaleItemResponseDTO updateExistingItem(SaleItem item, int additionalQuantity) {
-        int newQuantity = item.getQuantitySold() + additionalQuantity;
+    private SaleItemResponseDTO updateExistingItem(SaleItem item, BigDecimal additionalQuantity) {
+        BigDecimal newQuantity = item.getQuantitySold().add(additionalQuantity);
 
         // Validation du stock pour la nouvelle quantité totale
         validateStockAvailability(
                 item.getProduct(),
                 item.getSale().getClient().getUserId(),
-                newQuantity
+                newQuantity.intValue()
         );
 
         item.setQuantitySold(newQuantity);
@@ -348,7 +348,7 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
     /**
      * ✅ CRÉATION DE NOUVEL ARTICLE AVEC VALIDATION
      */
-    private SaleItemResponseDTO createNewItem(Sale sale, Product product, int quantity) {
+    private SaleItemResponseDTO createNewItem(Sale sale, Product product, BigDecimal quantity) {
         SaleItem newItem = SaleItem.builder()
                 .sale(sale)
                 .product(product)
@@ -412,8 +412,8 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
     /**
      * Vérification de disponibilité de stock avant ajout
      */
-    public boolean checkProductAvailability(UUID productId, UUID clientId, int quantity) {
-        return optimisticStockService.isStockSufficient(productId, clientId, quantity);
+    public boolean checkProductAvailability(UUID productId, UUID clientId, BigDecimal quantity) {
+        return optimisticStockService.isStockSufficient(productId, clientId, quantity.intValue());
     }
 
     /**
