@@ -16,6 +16,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 
 @Data
@@ -63,4 +64,39 @@ public class Product {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
     private List<Promotion> promotions;
+
+    /**
+     * Type de vente : true = au poids (kg), false = à la pièce
+     */
+    @Column(nullable = false)
+    private Boolean isSoldByWeight = false;
+
+    /**
+     * Unité d'affichage : "kg", "pièce", "L", "paquet"
+     */
+    @Column(length = 10, nullable = false)
+    private String unitLabel = "pièce";
+
+    /**
+     * Calcule le prix total pour une quantité (avec 2 décimales)
+     */
+    public BigDecimal calculateTotalPrice(BigDecimal quantity) {
+        if (quantity == null || unitPrice == null) {
+            return BigDecimal.ZERO;
+        }
+        return unitPrice.multiply(quantity).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    /**
+     * Formate le prix : "4.50 €/kg" ou "2.80 €/pièce"
+     */
+    public String getFormattedPrice() {
+        return String.format("%.2f €/%s", unitPrice, unitLabel);
+    }
+
+    // Getters/Setters
+    public Boolean getIsSoldByWeight() { return isSoldByWeight; }
+    public void setIsSoldByWeight(Boolean isSoldByWeight) { this.isSoldByWeight = isSoldByWeight; }
+    public String getUnitLabel() { return unitLabel; }
+    public void setUnitLabel(String unitLabel) { this.unitLabel = unitLabel; }
 }

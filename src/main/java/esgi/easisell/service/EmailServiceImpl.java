@@ -158,4 +158,36 @@ public class EmailServiceImpl implements EmailService {
             throw new EmailException("Erreur inattendue lors de l'envoi de l'email à: " + to, e);
         }
     }
+
+    @Async
+    @Override
+    public void sendEmployeeAccessRequest(Client client, String employeeName, String employeeEmail) throws EmailException {
+        log.info("Préparation de l'email de demande d'accès employé pour le client: {}", client.getUsername());
+
+        try {
+            Map<String, Object> variables = new HashMap<>();
+            variables.put("client", client);
+            variables.put("employeeName", employeeName);
+            variables.put("employeeEmail", employeeEmail);
+            variables.put("supportEmail", "info@easy-sell.net");
+            variables.put("logoUrl", "https://via.placeholder.com/200x80/4CAF50/FFFFFF?text=EasiSell");
+
+            // URL pour gérer la demande (optionnel)
+            String frontendUrl = env.getProperty("app.frontend.url", "https://deploy.dr8bqsixqjzkl.amplifyapp.com");
+            variables.put("manageUrl", frontendUrl + "/client/employee-access");
+
+            sendHtmlEmail(
+                    client.getUsername(),
+                    "Demande d'accès employé - " + employeeName,
+                    "emails/client/employee-access-request",
+                    variables
+            );
+
+            log.info("Email de demande d'accès employé envoyé avec succès à: {}", client.getUsername());
+
+        } catch (Exception e) {
+            log.error("Erreur lors de l'envoi de l'email de demande d'accès employé", e);
+            throw new EmailException("Erreur lors de l'envoi de l'email de demande d'accès employé", e);
+        }
+    }
 }

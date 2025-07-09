@@ -60,7 +60,7 @@ class SaleItemTest {
     @DisplayName("✅ Constructeur Builder")
     void testBuilderConstructor() {
         UUID saleItemId = UUID.randomUUID();
-        int quantitySold = 3;
+        BigDecimal quantitySold = BigDecimal.valueOf(3);
         BigDecimal priceAtSale = new BigDecimal("7.50");
 
         SaleItem newSaleItem = SaleItem.builder()
@@ -91,7 +91,7 @@ class SaleItemTest {
         saleItem.setSaleItemId(saleItemId);
         saleItem.setSale(sale);
         saleItem.setProduct(product);
-        saleItem.setQuantitySold(quantitySold);
+        saleItem.setQuantitySold(BigDecimal.valueOf(quantitySold));
         saleItem.setPriceAtSale(priceAtSale);
 
         assertEquals(saleItemId, saleItem.getSaleItemId());
@@ -120,9 +120,9 @@ class SaleItemTest {
     @Test
     @DisplayName("✅ Validation métier - quantité positive")
     void testQuantityValidation() {
-        saleItem.setQuantitySold(10);
+        saleItem.setQuantitySold(BigDecimal.valueOf(10));
 
-        assertTrue(saleItem.getQuantitySold() > 0);
+        assertTrue(saleItem.getQuantitySold().intValue() > 0);
     }
 
     /**

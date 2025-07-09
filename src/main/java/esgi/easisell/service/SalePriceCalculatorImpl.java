@@ -11,13 +11,13 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.List;
 
-@Service  // Changé de @Component à @Service
+@Service
 @RequiredArgsConstructor
 class SalePriceCalculatorImpl implements ISalePriceCalculator {
 
     @Override
-    public BigDecimal calculateItemPrice(Product product, int quantity) {
-        return product.getUnitPrice().multiply(BigDecimal.valueOf(quantity));
+    public BigDecimal calculateItemPrice(Product product, BigDecimal quantity) {
+        return product.getUnitPrice().multiply(quantity);
     }
 
     @Override

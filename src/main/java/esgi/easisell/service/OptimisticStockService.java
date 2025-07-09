@@ -64,7 +64,7 @@ public class OptimisticStockService {
             decreaseStockForProduct(
                     saleItem.getProduct().getProductId(),
                     sale.getClient().getUserId(),
-                    saleItem.getQuantitySold()
+                    saleItem.getQuantitySold().intValue()  // ✅ FIX : Conversion BigDecimal vers int
             );
         }
 
@@ -184,7 +184,7 @@ public class OptimisticStockService {
 
         for (SaleItem saleItem : sale.getSaleItems()) {
             Product product = saleItem.getProduct();
-            int requestedQuantity = saleItem.getQuantitySold();
+            int requestedQuantity = saleItem.getQuantitySold().intValue();  // ✅ FIX : Conversion
 
             if (!isStockSufficient(product.getProductId(), sale.getClient().getUserId(), requestedQuantity)) {
                 int availableStock = getTotalStockQuantity(product.getProductId(), sale.getClient().getUserId());

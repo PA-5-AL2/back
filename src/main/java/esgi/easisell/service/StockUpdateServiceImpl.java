@@ -18,9 +18,10 @@ class StockUpdateServiceImpl implements IStockUpdateService {
     @Transactional
     public void decreaseStockForSale(Sale sale) {
         for (SaleItem item : sale.getSaleItems()) {
+            int quantityToDecrease = item.getQuantitySold().intValue();
             boolean success = stockItemService.adjustStockQuantity(
                     item.getProduct().getProductId(),
-                    -item.getQuantitySold()
+                    -quantityToDecrease
             );
 
             if (!success) {

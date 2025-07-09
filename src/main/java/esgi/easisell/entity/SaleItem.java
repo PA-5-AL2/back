@@ -30,8 +30,8 @@ public class SaleItem {
     @Column(name = "sale_item_id")
     private UUID saleItemId;
 
-    @Column(nullable = false)
-    private int quantitySold;
+    @Column(nullable = false, precision = 10, scale = 3)
+    private BigDecimal quantitySold;
 
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal priceAtSale;
@@ -45,4 +45,7 @@ public class SaleItem {
     @JoinColumn(name = "product_id", nullable = false)
     @ToString.Exclude
     private Product product;
+
+    public BigDecimal getQuantitySold() { return quantitySold; }
+    public void setQuantitySold(BigDecimal quantitySold) { this.quantitySold = quantitySold; }
 }

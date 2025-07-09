@@ -52,6 +52,7 @@ public class SecurityConfig {
                                 .requestMatchers("/api/password-reset/request").permitAll()
                                 .requestMatchers("/api/password-reset/changed-notification").permitAll()
                                 .requestMatchers("/api/password-reset/status").permitAll()
+                                .requestMatchers("/api/employee-access/**").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/").permitAll()
                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 

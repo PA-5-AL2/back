@@ -28,9 +28,19 @@ public class ReceiptGenerator {
                     ReceiptItemDTO receiptItem = new ReceiptItemDTO();
                     receiptItem.setProductName(item.getProduct().getName());
                     receiptItem.setBarcode(item.getProduct().getBarcode());
-                    receiptItem.setQuantity(item.getQuantitySold());
+                    receiptItem.setQuantity(item.getQuantitySold().intValue());
                     receiptItem.setUnitPrice(item.getProduct().getUnitPrice());
                     receiptItem.setTotal(item.getPriceAtSale());
+                    // ✅ NOUVEAU : Ajout des informations formatées pour le ticket
+                    if (item.getProduct().getIsSoldByWeight() != null && item.getProduct().getIsSoldByWeight()) {
+                        // Pour les produits au poids : "2.350 kg"
+                        receiptItem.setFormattedQuantity(String.format("%.3f %s",
+                                item.getQuantitySold(), item.getProduct().getUnitLabel()));
+                    } else {
+                        // Pour les pièces : "3 pièces"
+                        receiptItem.setFormattedQuantity(String.format("%.0f %s",
+                                item.getQuantitySold(), item.getProduct().getUnitLabel()));
+                    }
                     return receiptItem;
                 })
                 .collect(Collectors.toList()));

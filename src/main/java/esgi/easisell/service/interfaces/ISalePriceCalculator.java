@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public interface ISalePriceCalculator {
-    BigDecimal calculateItemPrice(Product product, int quantity);
+    BigDecimal calculateItemPrice(Product product, BigDecimal quantity);
     BigDecimal calculateTotal(List<SaleItem> items);
     SaleTotalDTO calculateSaleTotal(Sale sale);
 }
