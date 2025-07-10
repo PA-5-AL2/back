@@ -1,5 +1,6 @@
 package esgi.easisell.dto;
 
+import esgi.easisell.entity.Product;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -26,7 +27,10 @@ public class ProductResponseDTO {
     private String unitLabel;
     private String formattedPrice;
 
-    public ProductResponseDTO(esgi.easisell.entity.Product product) {
+    public ProductResponseDTO() {
+    }
+
+    public ProductResponseDTO(Product product) {
         this.productId = product.getProductId();
         this.name = product.getName();
         this.description = product.getDescription();
