@@ -43,7 +43,7 @@ class UserTest {
      * Test getters setters.
      */
     @Test
-    @DisplayName("✅ Getters/Setters fonctionnent")
+    @DisplayName("Getters/Setters fonctionnent")
     void testGettersSetters() {
         // Arrange
         UUID userId = UUID.randomUUID();
