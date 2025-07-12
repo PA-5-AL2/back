@@ -334,7 +334,14 @@ class DeletedUserServiceTest {
             assertEquals(testClient.getCurrencyPreference(), deletedUser.getCurrencyPreference());
             assertEquals(deletedBy, deletedUser.getDeletedBy());
             assertEquals(reason, deletedUser.getDeletionReason());
-            assertNotNull(deletedUser.getDeletedAt());
+
+            // ✅ CORRECTION : Ne pas vérifier deletedAt car ce champ est géré par @PrePersist
+            // qui ne s'exécute pas avec Mockito. Dans un test unitaire, on teste la logique
+            // du service, pas la persistance JPA.
+            // Si vous voulez tester que le timestamp est défini, il faudrait soit :
+            // 1. Le faire dans le service lui-même avant save()
+            // 2. Ou faire un test d'intégration avec une vraie base de données
+
             return true;
         }));
     }
