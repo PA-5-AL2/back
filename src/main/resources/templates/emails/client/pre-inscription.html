@@ -11,6 +11,8 @@
         .footer { margin-top: 20px; padding: 10px; text-align: center; font-size: 0.8em; color: #777; }
         .button { background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block; }
         .credentials { background: #f9f9f9; padding: 15px; border-left: 4px solid #4CAF50; margin: 15px 0; }
+        .access-code { background: #e8f5e8; padding: 15px; border-left: 4px solid #2196F3; margin: 15px 0; border-radius: 5px; }
+        .access-code-value { font-size: 18px; font-weight: bold; color: #2196F3; text-align: center; background: white; padding: 10px; border-radius: 5px; margin: 10px 0; letter-spacing: 2px; }
     </style>
 </head>
 <body>
@@ -34,6 +36,14 @@
         <h3>Vos identifiants de connexion :</h3>
         <p><strong>Email :</strong> <span th:text="${user.username}">email@example.com</span></p>
         <p><strong>Mot de passe temporaire :</strong> <span th:text="${tempPassword}">mot_de_passe</span></p>
+    </div>
+
+    <!-- NOUVEAU : Section Code d'Accès -->
+    <div class="access-code">
+        <h3>🔐 Votre Code d'Accès :</h3>
+        <p>Ce code vous sera demandé lors de votre première connexion :</p>
+        <div class="access-code-value" th:text="${accessCode}">ABC123</div>
+        <p><strong>Important :</strong> Conservez ce code précieusement, il vous sera nécessaire pour accéder à votre espace client.</p>
     </div>
 
     <p>Vous pouvez dès à présent accéder à votre espace client en vous connectant via notre application mobile ou web.</p>

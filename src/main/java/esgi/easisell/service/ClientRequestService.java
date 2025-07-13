@@ -113,11 +113,6 @@ public class ClientRequestService {
             throw new RuntimeException("Cette demande a déjà été traitée (statut: " + request.getStatus() + ")");
         }
 
-        // Vérifier à nouveau que l'email est disponible
-        if (!authService.isUsernameAvailable(request.getEmail())) {
-            throw new RuntimeException("Un compte existe déjà avec cet email: " + request.getEmail());
-        }
-
         // Générer un mot de passe temporaire sécurisé
         String tempPassword = generateTemporaryPassword();
 
@@ -133,6 +128,9 @@ public class ClientRequestService {
 
         User newUser = authService.registerUser(authDTO);
 
+        // IMPORTANT: Cast vers Client pour accéder au code d'accès
+        Client newClient = (Client) newUser;
+
         // Mettre à jour la demande
         request.setStatus(ClientRequest.RequestStatus.APPROVED);
         request.setResponseDate(LocalDateTime.now());
@@ -141,15 +139,59 @@ public class ClientRequestService {
 
         log.info("Compte client créé pour: {} ({})", request.getCompanyName(), request.getEmail());
 
-        // 📧 Envoyer email d'activation (utilise template existant pre-inscription)
+        // 📧 Envoyer email d'activation AVEC le code d'accès
         try {
-            emailService.sendPreRegistrationEmail(newUser, tempPassword);
-            log.info("📧 Email d'activation envoyé à {}", newUser.getUsername());
+            // NOUVEAU: Passer le code d'accès à l'email
+            sendActivationEmailWithAccessCode(newClient, tempPassword);
+            log.info("📧 Email d'activation envoyé à {} avec code d'accès: {}",
+                    newUser.getUsername(), newClient.getAccessCode());
         } catch (EmailException e) {
             log.error("Erreur envoi email activation à {}", newUser.getUsername(), e);
         }
 
-        return (Client) newUser;
+        return newClient;
+    }
+
+    private void sendActivationEmailWithAccessCode(Client client, String tempPassword) throws EmailException {
+        log.info("🚀 Début sendActivationEmailWithAccessCode pour: {}", client.getUsername());
+
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("user", client);
+        variables.put("tempPassword", tempPassword);
+
+        String accessCode = client.getAccessCode();
+        variables.put("accessCode", accessCode);
+
+        log.info("📋 Variables préparées:");
+        log.info("   - user.username: {}", client.getUsername());
+        log.info("   - user.firstName: {}", client.getFirstName());
+        log.info("   - tempPassword: {}", tempPassword);
+        log.info("   - accessCode DIRECT: '{}'", accessCode);
+        log.info("   - accessCode DANS MAP: '{}'", variables.get("accessCode"));
+
+        // URLs existantes
+        String frontendUrl = "https://deploy.dr8bqsixqjzkl.amplifyapp.com";
+        variables.put("loginUrl", frontendUrl + "/login");
+        variables.put("contactUrl", "info@easy-sell.net");
+        variables.put("termsUrl", frontendUrl + "/terms");
+        variables.put("logoUrl", "https://via.placeholder.com/200x80/4CAF50/FFFFFF?text=EasiSell");
+
+        // ✅ VÉRIFICATION FINALE
+        if (accessCode == null || accessCode.isEmpty()) {
+            log.error("❌ ERREUR CRITIQUE: accessCode est null ou vide!");
+            throw new EmailException("Code d'accès manquant pour le client: " + client.getUsername());
+        }
+
+        log.info("📧 Envoi email avec template: emails/client/pre-inscription");
+
+        emailService.sendHtmlEmail(
+                client.getUsername(),
+                "🎉 Bienvenue sur EasiSell - Votre compte est activé !",
+                "emails/client/pre-inscription",
+                variables
+        );
+
+        log.info("✅ Email envoyé avec succès à: {}", client.getUsername());
     }
 
     /**
