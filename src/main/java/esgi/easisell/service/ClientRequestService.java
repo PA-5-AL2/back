@@ -36,6 +36,13 @@ public class ClientRequestService {
     @Transactional
     public ClientRequest submitRequest(ClientRequestDTO requestDTO) {
 
+        log.info("Nouvelle demande reçue:");
+        log.info("   - Entreprise: {}", requestDTO.getCompanyName());
+        log.info("   - Contact: {}", requestDTO.getContactName());
+        log.info("   - Email: {}", requestDTO.getEmail());
+        log.info("   - Message: '{}'", requestDTO.getMessage());
+
+
         // Vérifier si l'email n'existe pas déjà
         if (!authService.isUsernameAvailable(requestDTO.getEmail())) {
             throw new IllegalArgumentException("Un compte existe déjà avec cet email: " + requestDTO.getEmail());
@@ -63,6 +70,7 @@ public class ClientRequestService {
 
         ClientRequest savedRequest = clientRequestRepository.save(request);
         log.info("Nouvelle demande client créée: {} - {}", savedRequest.getCompanyName(), savedRequest.getEmail());
+        log.info("Demande sauvegardée avec message: '{}'", savedRequest.getMessage());
 
         // Envoyer email de confirmation au demandeur (async)
         try {

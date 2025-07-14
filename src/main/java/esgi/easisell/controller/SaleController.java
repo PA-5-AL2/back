@@ -1,19 +1,25 @@
 package esgi.easisell.controller;
 
 import esgi.easisell.dto.*;
+import esgi.easisell.entity.DeferredPayment;
+import esgi.easisell.entity.Sale;
+import esgi.easisell.repository.SaleRepository;
 import esgi.easisell.service.SaleService;
 import esgi.easisell.utils.SecurityUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import esgi.easisell.service.OptimisticStockService;
+import esgi.easisell.dto.DeferredPaymentCreateDTO;
+import esgi.easisell.dto.DeferredPaymentResponseDTO;
+import esgi.easisell.service.DeferredPaymentService;
+import esgi.easisell.repository.DeferredPaymentRepository;
 
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/sales")
@@ -23,6 +29,15 @@ public class SaleController {
     private final SaleService saleService;
     private final SecurityUtils securityUtils;
     private final OptimisticStockService optimisticStockService;
+    @Autowired
+    private DeferredPaymentService deferredPaymentService;
+
+    @Autowired
+    private DeferredPaymentRepository deferredPaymentRepository;
+
+    // Ajoutez ceci dans la classe SaleController, avec les autres @Autowired :
+    @Autowired
+    private SaleRepository saleRepository;
 
     // Constructeur explicite avec log
     public SaleController(SaleService saleService, SecurityUtils securityUtils, OptimisticStockService optimisticStockService) {
@@ -482,6 +497,153 @@ public class SaleController {
 
         } catch (Exception e) {
             log.error("Erreur dashboard multi-caisses", e);
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Finaliser la vente avec paiement différé
+     * POST /api/sales/{saleId}/payment/deferred
+     */
+    @PostMapping("/{saleId}/payment/deferred")
+    public ResponseEntity<?> processDeferredPayment(
+            @PathVariable UUID saleId,
+            @RequestBody DeferredPaymentCreateDTO deferredPaymentDTO,
+            HttpServletRequest request) {
+
+        log.info("Traitement du paiement différé pour la vente {} - Client: {}",
+                saleId, deferredPaymentDTO.getCustomerName());
+
+        // Vérification de sécurité si vous en avez une
+        // if (!canAccessSale(saleId, request)) {
+        //     return ResponseEntity.status(HttpStatus.FORBIDDEN)
+        //             .body(Map.of("error", "Accès non autorisé à cette vente"));
+        // }
+
+        try {
+            // Vérifier que la vente existe
+            // Sale sale = saleService.getSaleById(saleId); // Utilisez votre méthode existante
+            // Ou utilisez directement :
+            Sale sale = saleRepository.findById(saleId)
+                    .orElseThrow(() -> new RuntimeException("Vente non trouvée"));
+
+            // Définir le montant du paiement différé basé sur le total de la vente
+            deferredPaymentDTO.setSaleId(saleId);
+            deferredPaymentDTO.setAmount(sale.getTotalAmount());
+
+            // Créer le paiement différé
+            DeferredPaymentResponseDTO deferredPayment = deferredPaymentService.createDeferredPayment(deferredPaymentDTO);
+
+            // Marquer la vente comme différée
+            sale.setIsDeferred(true);
+            saleRepository.save(sale);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Paiement différé créé avec succès");
+            response.put("saleId", saleId);
+            response.put("deferredPayment", deferredPayment);
+            response.put("totalAmount", sale.getTotalAmount());
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("Erreur lors du traitement du paiement différé", e);
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Obtenir les types de paiement disponibles (incluant le paiement différé)
+     * GET /api/sales/payment-types
+     */
+    @GetMapping("/payment-types")
+    public ResponseEntity<?> getPaymentTypes(HttpServletRequest request) {
+
+        List<Map<String, Object>> paymentTypes = Arrays.asList(
+                Map.of(
+                        "type", "CASH",
+                        "label", "Espèces",
+                        "icon", "money",
+                        "enabled", true
+                ),
+                Map.of(
+                        "type", "CARD",
+                        "label", "Carte bancaire",
+                        "icon", "credit_card",
+                        "enabled", true
+                ),
+                Map.of(
+                        "type", "CHECK",
+                        "label", "Chèque",
+                        "icon", "receipt",
+                        "enabled", true
+                ),
+                Map.of(
+                        "type", "DEFERRED",
+                        "label", "Paiement différé",
+                        "icon", "schedule",
+                        "enabled", true,
+                        "description", "Le client paiera plus tard"
+                )
+        );
+
+        return ResponseEntity.ok(Map.of(
+                "paymentTypes", paymentTypes,
+                "defaultType", "CASH"
+        ));
+    }
+
+    /**
+     * Convertir un paiement différé en paiement normal
+     * POST /api/sales/{saleId}/convert-to-normal-payment
+     */
+    @PostMapping("/{saleId}/convert-to-normal-payment")
+    public ResponseEntity<?> convertDeferredToNormalPayment(
+            @PathVariable UUID saleId,
+            @RequestParam String paymentType,
+            @RequestParam BigDecimal amountReceived,
+            HttpServletRequest request) {
+
+        log.info("Conversion du paiement différé en paiement normal pour la vente: {}", saleId);
+
+        try {
+            // Vérifier que la vente existe et est bien en paiement différé
+            Sale sale = saleRepository.findById(saleId)
+                    .orElseThrow(() -> new RuntimeException("Vente non trouvée"));
+
+            if (!sale.getIsDeferred()) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Cette vente n'est pas en paiement différé"));
+            }
+
+            // Traiter le paiement normal
+            // PaymentResultDTO result = saleService.processPayment(saleId, paymentType, amountReceived, "EUR");
+            // Ou créez un paiement basique :
+
+            // Marquer la vente comme non différée
+            sale.setIsDeferred(false);
+            saleRepository.save(sale);
+
+            // Optionnel : marquer comme payé le paiement différé associé
+            List<DeferredPayment> deferredPayments = deferredPaymentRepository.findBySaleSaleId(saleId);
+            for (DeferredPayment dp : deferredPayments) {
+                dp.setStatus(DeferredPayment.PaymentStatus.PAID);
+                dp.setAmountPaid(dp.getAmount());
+                deferredPaymentRepository.save(dp);
+            }
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Paiement différé converti en paiement normal");
+            response.put("saleId", saleId);
+            response.put("paymentType", paymentType);
+            response.put("amount", amountReceived);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("Erreur lors de la conversion du paiement", e);
             return ResponseEntity.badRequest()
                     .body(Map.of("error", e.getMessage()));
         }

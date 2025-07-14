@@ -33,19 +33,17 @@ public class EmailServiceImpl implements EmailService {
     @Value("${spring.mail.username:no-reply@easisell.com}")
     private String fromEmail;
 
-    // Dans votre EmailServiceImpl.java, remplacez la méthode sendPreRegistrationEmail par :
 
     @Async
     @Override
     public void sendPreRegistrationEmail(User user, String rawPassword) throws EmailException {
-        log.info("🚀 Préparation de l'email de pré-inscription pour: {}", user.getUsername());
+        log.info("Préparation de l'email de pré-inscription pour: {}", user.getUsername());
 
         try {
             Map<String, Object> variables = new HashMap<>();
             variables.put("user", user);
             variables.put("tempPassword", rawPassword);
 
-            // ✅ AJOUT CRITIQUE: Code d'accès pour les clients
             if (user instanceof Client client) {
                 String accessCode = client.getAccessCode();
                 variables.put("accessCode", accessCode);
@@ -62,18 +60,17 @@ public class EmailServiceImpl implements EmailService {
             variables.put("termsUrl", env.getProperty("app.terms.url", frontendUrl + "/terms"));
             variables.put("logoUrl", env.getProperty("app.logo.url", "https://via.placeholder.com/200x80/4CAF50/FFFFFF?text=EasiSell"));
 
-            // Debug des variables envoyées
-            log.info("📋 Variables envoyées au template:");
+            log.info("Variables envoyées au template:");
             log.info("   - accessCode: '{}'", variables.get("accessCode"));
 
             sendHtmlEmail(user.getUsername(),
-                    "🎉 Bienvenue sur EasiSell - Votre compte est activé !",
+                    "Bienvenue sur EasiSell - Votre compte est activé !",
                     "emails/client/pre-inscription",
                     variables);
 
-            log.info("✅ Email de pré-inscription envoyé à: {}", user.getUsername());
+            log.info("Email de pré-inscription envoyé à: {}", user.getUsername());
         } catch (Exception e) {
-            log.error("❌ Échec de l'envoi de l'email de pré-inscription à: {}", user.getUsername(), e);
+            log.error("Échec de l'envoi de l'email de pré-inscription à: {}", user.getUsername(), e);
             throw new EmailException("Échec de l'envoi de l'email de pré-inscription à: " + user.getUsername(), e);
         }
     }

@@ -18,6 +18,12 @@
         <li><strong>Téléphone :</strong> <span th:text="${request.phoneNumber}"></span></li>
         <li><strong>Adresse :</strong> <span th:text="${request.address}"></span></li>
     </ul>
+
+    <div th:if="${request.message != null and !#strings.isEmpty(request.message)}"
+         style="background: #f8f9fa; padding: 15px; border-left: 4px solid #007bff; margin: 15px 0;">
+        <h4>Message du client :</h4>
+        <p th:text="${request.message}" style="font-style: italic; margin: 0;">Message du client</p>
+    </div>
 </div>
 </body>
 </html>
