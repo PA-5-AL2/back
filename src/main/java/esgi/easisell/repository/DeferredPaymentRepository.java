@@ -102,4 +102,15 @@ public interface DeferredPaymentRepository extends JpaRepository<DeferredPayment
     List<DeferredPayment> findPaymentsNeedingReminder(@Param("clientId") UUID clientId,
                                                       @Param("currentDate") LocalDate currentDate,
                                                       @Param("reminderThreshold") java.sql.Timestamp reminderThreshold);
+
+    /**
+     * Statistiques des paiements différés par type de customer
+     */
+    @Query("SELECT c.customerType, COUNT(dp), COALESCE(SUM(dp.amount - dp.amountPaid), 0) " +
+            "FROM DeferredPayment dp " +
+            "LEFT JOIN dp.customer c " +
+            "WHERE dp.client.userId = :clientId " +
+            "GROUP BY c.customerType " +
+            "ORDER BY SUM(dp.amount - dp.amountPaid) DESC")
+    List<Object[]> getPaymentStatsByCustomerType(@Param("clientId") UUID clientId);
 }

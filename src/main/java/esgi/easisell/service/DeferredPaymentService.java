@@ -1,17 +1,17 @@
 package esgi.easisell.service;
 
-import esgi.easisell.dto.DeferredPaymentCreateDTO;
-import esgi.easisell.dto.DeferredPaymentResponseDTO;
-import esgi.easisell.dto.DeferredPaymentUpdateDTO;
-import esgi.easisell.dto.DeferredPaymentStatsDTO;
+import esgi.easisell.dto.*;
 import esgi.easisell.entity.DeferredPayment;
 import esgi.easisell.entity.Sale;
 import esgi.easisell.entity.Client;
+import esgi.easisell.entity.Customer;
+import esgi.easisell.repository.CustomerRepository;
 import esgi.easisell.repository.DeferredPaymentRepository;
 import esgi.easisell.repository.SaleRepository;
 import esgi.easisell.repository.ClientRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,41 +32,125 @@ public class DeferredPaymentService {
     private final SaleRepository saleRepository;
     private final ClientRepository clientRepository;
     private final EmailService emailService;
+    @Autowired
+    private CustomerService customerService;
+    private final CustomerRepository customerRepository;
 
     /**
-     * Créer un nouveau paiement différé
+     * Créer un nouveau paiement différé avec reconnaissance automatique du client
      */
     @Transactional
     public DeferredPaymentResponseDTO createDeferredPayment(DeferredPaymentCreateDTO createDTO) {
-        log.info("Création d'un paiement différé pour la vente: {}", createDTO.getSaleId());
+        log.info("Création d'un paiement différé pour la vente: {} - Client: {}",
+                createDTO.getSaleId(), createDTO.getCustomerName());
 
         // Vérifier que la vente existe
         Sale sale = saleRepository.findById(createDTO.getSaleId())
                 .orElseThrow(() -> new RuntimeException("Vente non trouvée: " + createDTO.getSaleId()));
 
-        // Marquer la vente comme différée si pas déjà fait
+        // 🔍 RECONNAISSANCE AUTOMATIQUE DU CLIENT
+        Customer customer = null;
+        String effectiveCustomerName = createDTO.getCustomerName();
+        String effectiveCustomerPhone = createDTO.getCustomerPhone();
+
+        if (createDTO.getCustomerName() != null && !createDTO.getCustomerName().trim().isEmpty()) {
+            // Tenter de reconnaître le client
+            CustomerRecognitionResponseDTO recognition = customerService.recognizeCustomer(
+                    sale.getClient().getUserId(),
+                    createDTO.getCustomerName(),
+                    createDTO.getCustomerPhone(),
+                    createDTO.getAmount()
+            );
+
+            if (recognition.isRecognized()) {
+                // Client reconnu - récupérer le profil complet
+                customer = customerRepository.findById(recognition.getCustomerId()).orElse(null);
+                log.info("Client reconnu: {} ({})", customer.getFullName(), customer.getCustomerType());
+            } else {
+                // Nouveau client - créer automatiquement le profil
+                customer = customerService.createCustomerFromPayment(
+                        sale.getClient().getUserId(),
+                        createDTO.getCustomerName(),
+                        createDTO.getCustomerPhone()
+                );
+                log.info("Nouveau profil client créé automatiquement: {}", customer.getFullName());
+            }
+        }
+
+        // Marquer la vente comme différée
         if (!sale.getIsDeferred()) {
             sale.setIsDeferred(true);
             saleRepository.save(sale);
         }
 
-        // Créer le paiement différé
-        DeferredPayment deferredPayment = DeferredPayment.builder()
+        // Créer le paiement différé avec ou sans customer
+        DeferredPayment.DeferredPaymentBuilder builder = DeferredPayment.builder()
                 .sale(sale)
                 .client(sale.getClient())
-                .customerName(createDTO.getCustomerName())
-                .customerPhone(createDTO.getCustomerPhone())
                 .amount(createDTO.getAmount())
                 .dueDate(createDTO.getDueDate())
                 .notes(createDTO.getNotes())
                 .currency(createDTO.getCurrency() != null ? createDTO.getCurrency() : "EUR")
-                .status(DeferredPayment.PaymentStatus.PENDING)
-                .build();
+                .status(DeferredPayment.PaymentStatus.PENDING);
 
+        if (customer != null) {
+            // Client avec profil complet
+            builder.customer(customer)
+                    .customerName(customer.getFullName()) // Pour compatibilité
+                    .customerPhone(customer.getPhone());
+        } else {
+            // Client sans profil (fallback)
+            builder.customerName(effectiveCustomerName)
+                    .customerPhone(effectiveCustomerPhone);
+        }
+
+        DeferredPayment deferredPayment = builder.build();
         DeferredPayment saved = deferredPaymentRepository.save(deferredPayment);
-        log.info("Paiement différé créé avec succès: {}", saved.getDeferredPaymentId());
+
+        // Mettre à jour les statistiques du customer si applicable
+        if (customer != null) {
+            customerService.updateCustomerAfterPurchase(customer.getCustomerId(), createDTO.getAmount());
+        }
+
+        log.info("Paiement différé créé avec succès: {} pour {}",
+                saved.getDeferredPaymentId(), saved.getEffectiveCustomerName());
 
         return new DeferredPaymentResponseDTO(saved);
+    }
+
+// 4️⃣ AJOUTER CETTE NOUVELLE MÉTHODE pour l'API de reconnaissance :
+
+    /**
+     * Reconnaître un client avant de créer le paiement différé
+     */
+    public CustomerRecognitionResponseDTO recognizeCustomerForPayment(UUID clientId, String customerName, String customerPhone, BigDecimal amount) {
+        log.info("Reconnaissance client: {} / {} pour montant: {}€", customerName, customerPhone, amount);
+
+        return customerService.recognizeCustomer(clientId, customerName, customerPhone, amount);
+    }
+
+// 5️⃣ AJOUTER CETTE MÉTHODE pour les statistiques enrichies :
+
+    /**
+     * Obtenir les statistiques enrichies avec informations clients
+     */
+    public DeferredPaymentStatsEnrichedDTO getEnrichedDeferredPaymentStats(UUID clientId) {
+        // Stats classiques
+        DeferredPaymentStatsDTO classicStats = getDeferredPaymentStats(clientId);
+
+        // Stats par type de client
+        List<Object[]> statsByCustomerType = deferredPaymentRepository.getPaymentStatsByCustomerType(clientId);
+
+        // Top clients avec paiements différés
+        List<Customer> topCustomers = customerRepository.findTopCustomersByDeferredPayments(clientId);
+
+        return DeferredPaymentStatsEnrichedDTO.builder()
+                .classicStats(classicStats)
+                .statsByCustomerType(statsByCustomerType)
+                .topCustomersWithDeferredPayments(topCustomers.stream()
+                        .map(CustomerResponseDTO::new)
+                        .collect(Collectors.toList()))
+                .build();
     }
 
     /**

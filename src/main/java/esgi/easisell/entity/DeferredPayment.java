@@ -1,5 +1,6 @@
 package esgi.easisell.entity;
 
+import esgi.easisell.entity.Customer;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -24,6 +25,13 @@ public class DeferredPayment {
     private UUID deferredPaymentId;
 
     /**
+     * Relation avec le customer (acheteur) - NOUVEAU
+     */
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "customer_id", nullable = true)
+    private Customer customer;
+
+    /**
      * Relation avec la vente
      */
     @ManyToOne(fetch = FetchType.LAZY)
@@ -38,13 +46,13 @@ public class DeferredPayment {
     private Client client;
 
     /**
-     * Nom du client ou référence pour le paiement différé
+     * Nom du client (pour compatibilité avec anciens paiements)
      */
-    @Column(name = "customer_name", nullable = false, length = 255)
+    @Column(name = "customer_name", length = 255)
     private String customerName;
 
     /**
-     * Téléphone du client (optionnel)
+     * Téléphone du client (pour compatibilité)
      */
     @Column(name = "customer_phone", length = 20)
     private String customerPhone;
@@ -146,5 +154,93 @@ public class DeferredPayment {
         if (amount.compareTo(BigDecimal.ZERO) == 0) return 0.0;
         return amountPaid.divide(amount, 4, java.math.RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(100)).doubleValue();
+    }
+
+    /**
+     * Obtenir le nom effectif du client (Customer en priorité, sinon nom saisi)
+     */
+    public String getEffectiveCustomerName() {
+        return customer != null ? customer.getFullName() : customerName;
+    }
+
+    /**
+     * Obtenir le téléphone effectif
+     */
+    public String getEffectiveCustomerPhone() {
+        return customer != null ? customer.getPhone() : customerPhone;
+    }
+
+    /**
+     * Vérifier si c'est un client reconnu (avec profil Customer)
+     */
+    public boolean hasCustomerProfile() {
+        return customer != null;
+    }
+
+    /**
+     * Obtenir le type de client (si profil existe)
+     */
+    public String getCustomerTypeLabel() {
+        if (customer == null) return "INCONNU";
+        return customer.getCustomerType().name();
+    }
+
+    /**
+     * Obtenir le niveau de confiance (si profil existe)
+     */
+    public Integer getCustomerTrustLevel() {
+        return customer != null ? customer.getTrustLevel() : 1;
+    }
+
+    /**
+     * Obtenir la description de fiabilité
+     */
+    public String getCustomerReliabilityDescription() {
+        if (customer == null) return "Client non reconnu - Prudence recommandée";
+        return customer.getReliabilityDescription();
+    }
+
+    /**
+     * Obtenir l'évaluation en étoiles
+     */
+    public String getCustomerStarRating() {
+        if (customer == null) return "⭐";
+        return customer.getStarRating();
+    }
+
+    /**
+     * Vérifier si le client peut avoir ce montant en paiement différé
+     */
+    public boolean isAmountAuthorizedForCustomer() {
+        if (customer == null) return amount.compareTo(BigDecimal.valueOf(50)) <= 0; // Limite par défaut
+        return customer.canHaveDeferredPayment(amount);
+    }
+
+    /**
+     * Obtenir une recommandation pour le commerçant
+     */
+    public String getRecommendationForMerchant() {
+        if (customer == null) {
+            return "⚠️ Client non reconnu - Demandez une pièce d'identité et limitez le montant à 50€";
+        }
+
+        switch (customer.getCustomerType()) {
+            case VIP:
+                return "⭐ Client VIP - Accord total recommandé (limite: " + customer.getMaxDeferredAmount() + "€)";
+            case FIDELE:
+                return "✅ Client fidèle - Paiement différé recommandé";
+            case REGULIER:
+                return "👍 Client régulier - Paiement différé acceptable";
+            case OCCASIONNEL:
+                return "📝 Client occasionnel - Paiement différé OK pour petits montants";
+            case NOUVEAU:
+                return "⚠️ Nouveau client - Prudence recommandée";
+            case BLACKLIST:
+                return "🚨 CLIENT BLACKLISTÉ - REFUSER LE PAIEMENT DIFFÉRÉ";
+            case INACTIF:
+                return "⏰ Client inactif - Vérifier sa situation actuelle";
+            default:
+                return "❓ Évaluation nécessaire";
+        }
     }
 }
