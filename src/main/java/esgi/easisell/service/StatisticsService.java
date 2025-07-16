@@ -66,13 +66,15 @@ public class StatisticsService {
         if (sales.isEmpty()) {
             return createEmptyStatistics(startDate, endDate, period);
         }
-
         BigDecimal totalRevenue = calculateTotalRevenue(sales);
         Integer totalVolume = calculateTotalVolume(sales);
+        BigDecimal totalPurchaseCost = calculateTotalPurchaseCost(sales);
+        BigDecimal totalProfit = totalRevenue.subtract(totalPurchaseCost);
+        BigDecimal profitMargin = calculateProfitMargin(totalRevenue, totalProfit);
 
         String topProductId = findTopProductId(sales);
 
-        StatisticsCalculation calculation = calculateAverages(totalRevenue, totalVolume,
+        StatisticsCalculation calculation = calculateAverages(totalRevenue, totalVolume, totalProfit,
                 startDate, endDate, period);
 
         return StatisticsDto.builder()
@@ -85,8 +87,55 @@ public class StatisticsService {
                 .endDate(endDate)
                 .periodType(period != null ? period.name() : "CUSTOM")
                 .topProductId(topProductId)
+                .totalPurchaseCost(totalPurchaseCost)
+                .totalProfit(totalProfit)
+                .profitMargin(profitMargin)
+                .averageProfitPerPeriod(calculation.averageProfit)
                 .build();
     }
+    /**
+     * Calcule le coût total d'achat des produits vendus
+     */
+    private BigDecimal calculateTotalPurchaseCost(List<Sale> sales) {
+        return sales.stream()
+                .flatMap(sale -> sale.getSaleItems().stream())
+                .map(this::calculateItemPurchaseCost)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    /**
+     * Calcule le coût d'achat d'un article vendu
+     */
+    private BigDecimal calculateItemPurchaseCost(SaleItem saleItem) {
+        BigDecimal purchasePrice = saleItem.getProduct().getPurchasePrice();
+        if (purchasePrice == null) {
+            purchasePrice = BigDecimal.ZERO; // Si pas de prix d'achat configuré
+        }
+        return purchasePrice.multiply(saleItem.getQuantitySold());
+    }
+
+    /**
+     * Calcule la marge bénéficiaire en pourcentage
+     */
+    private BigDecimal calculateProfitMargin(BigDecimal totalRevenue, BigDecimal totalProfit) {
+        if (totalRevenue.compareTo(BigDecimal.ZERO) == 0) {
+            return BigDecimal.ZERO;
+        }
+        return totalProfit
+                .divide(totalRevenue, 4, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(100))
+                .setScale(2, RoundingMode.HALF_UP);
+    }
+
+    /**
+     * Mettre à jour le record StatisticsCalculation
+     */
+    private record StatisticsCalculation(
+            BigDecimal averageRevenue,
+            Integer averageVolume,
+            Integer numberOfPeriods,
+            BigDecimal averageProfit
+    ) {}
 
     private BigDecimal calculateTotalRevenue(List<Sale> sales) {
         return sales.stream()
@@ -103,11 +152,12 @@ public class StatisticsService {
     }
 
     private StatisticsCalculation calculateAverages(BigDecimal totalRevenue, Integer totalVolume,
-                                                    LocalDate startDate, LocalDate endDate,
-                                                    StatisticsPeriod period) {
+                                                    BigDecimal totalProfit, LocalDate startDate,
+                                                    LocalDate endDate, StatisticsPeriod period) {
         int numberOfPeriods;
         BigDecimal averageRevenue;
         Integer averageVolume;
+        BigDecimal averageProfit;
 
         if (period != null) {
             numberOfPeriods = calculateNumberOfPeriods(startDate, endDate, period);
@@ -118,13 +168,15 @@ public class StatisticsService {
         if (numberOfPeriods > 0) {
             averageRevenue = totalRevenue.divide(BigDecimal.valueOf(numberOfPeriods), 2, RoundingMode.HALF_UP);
             averageVolume = totalVolume / numberOfPeriods;
+            averageProfit = totalProfit.divide(BigDecimal.valueOf(numberOfPeriods), 2, RoundingMode.HALF_UP);
         } else {
             averageRevenue = BigDecimal.ZERO;
             averageVolume = 0;
+            averageProfit = BigDecimal.ZERO;
             numberOfPeriods = 1;
         }
 
-        return new StatisticsCalculation(averageRevenue, averageVolume, numberOfPeriods);
+        return new StatisticsCalculation(averageRevenue, averageVolume, numberOfPeriods, averageProfit);
     }
 
     private LocalDate calculateStartDate(LocalDate endDate, StatisticsPeriod period) {
@@ -142,21 +194,6 @@ public class StatisticsService {
             case YEARLY -> Math.max(1, (int) ChronoUnit.YEARS.between(startDate, endDate));
         };
     }
-
-    private StatisticsDto createEmptyStatistics(LocalDate startDate, LocalDate endDate, StatisticsPeriod period) {
-        return StatisticsDto.builder()
-                .totalRevenue(BigDecimal.ZERO)
-                .totalVolume(0)
-                .averageRevenuePerPeriod(BigDecimal.ZERO)
-                .averageVolumePerPeriod(0)
-                .numberOfPeriods(0)
-                .startDate(startDate)
-                .endDate(endDate)
-                .periodType(period != null ? period.name() : "CUSTOM")
-                .build();
-    }
-
-    // ✅ FIX LIGNE 165 - Conversion BigDecimal vers int pour summingInt
     private String findTopProductId(List<Sale> sales) {
         return sales.stream()
                 .flatMap(sale -> sale.getSaleItems().stream())
@@ -179,6 +216,21 @@ public class StatisticsService {
 
         return calculateStatisticsForPeriod(clientId, startDate, endDate, null, sales);
     }
-
-    private record StatisticsCalculation(BigDecimal averageRevenue, Integer averageVolume, Integer numberOfPeriods) {}
+    private StatisticsDto createEmptyStatistics(LocalDate startDate, LocalDate endDate, StatisticsPeriod period) {
+        return StatisticsDto.builder()
+                .totalRevenue(BigDecimal.ZERO)
+                .totalVolume(0)
+                .averageRevenuePerPeriod(BigDecimal.ZERO)
+                .averageVolumePerPeriod(0)
+                .numberOfPeriods(0)
+                .startDate(startDate)
+                .endDate(endDate)
+                .periodType(period != null ? period.name() : "CUSTOM")
+                .totalPurchaseCost(BigDecimal.ZERO)
+                .totalProfit(BigDecimal.ZERO)
+                .profitMargin(BigDecimal.ZERO)
+                .averageProfitPerPeriod(BigDecimal.ZERO)
+                .topProductId(null)
+                .build();
+    }
 }

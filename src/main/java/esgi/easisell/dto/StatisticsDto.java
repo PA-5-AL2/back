@@ -22,4 +22,9 @@ public class StatisticsDto {
     private LocalDate endDate;
     private String periodType;
     private String topProductId;
+    private BigDecimal totalPurchaseCost;    // Total des coûts d'achat
+    private BigDecimal totalProfit;          // Bénéfice total
+    private BigDecimal profitMargin;         // Marge bénéficiaire en %
+    private BigDecimal averageProfitPerPeriod; // Bénéfice moyen par période
+
 }

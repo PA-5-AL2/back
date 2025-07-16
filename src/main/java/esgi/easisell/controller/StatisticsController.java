@@ -107,5 +107,52 @@ public class StatisticsController {
             return ResponseEntity.internalServerError().build();
         }
     }
+    /**
+     * Statistiques du jour
+     * GET /api/statistics/today
+     */
+    @GetMapping("/today")
+    public ResponseEntity<StatisticsDto> getTodayStatistics(HttpServletRequest request) {
+        String clientId = securityUtils.getCurrentUserId(request);
+        if (clientId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        try {
+            LocalDate today = LocalDate.now();
+            log.info("Statistiques du jour {} pour le client {}", today, clientId);
+
+            StatisticsDto statistics = statisticsService.getStatisticsForDateRange(
+                    UUID.fromString(clientId), today, today);
+            return ResponseEntity.ok(statistics);
+        } catch (Exception e) {
+            log.error("Erreur statistiques du jour", e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Statistiques d'hier
+     * GET /api/statistics/yesterday
+     */
+    @GetMapping("/yesterday")
+    public ResponseEntity<StatisticsDto> getYesterdayStatistics(HttpServletRequest request) {
+        String clientId = securityUtils.getCurrentUserId(request);
+        if (clientId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        try {
+            LocalDate yesterday = LocalDate.now().minusDays(1);
+            log.info("Statistiques d'hier {} pour le client {}", yesterday, clientId);
+
+            StatisticsDto statistics = statisticsService.getStatisticsForDateRange(
+                    UUID.fromString(clientId), yesterday, yesterday);
+            return ResponseEntity.ok(statistics);
+        } catch (Exception e) {
+            log.error("Erreur statistiques d'hier", e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 
 }
