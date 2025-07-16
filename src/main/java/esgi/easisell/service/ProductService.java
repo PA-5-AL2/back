@@ -17,6 +17,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import esgi.easisell.entity.Supplier;
+import esgi.easisell.repository.SupplierRepository;
+import java.sql.Timestamp;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +29,8 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final ClientRepository clientRepository;
+    private final SupplierRepository supplierRepository;
+
 
     @Transactional
     public ProductResponseDTO createProduct(ProductDTO productDTO) {
@@ -72,27 +77,27 @@ public class ProductService {
                 savedProduct.getProductId(),
                 savedProduct.getFormattedPrice());
 
-        return convertToResponseDTO(savedProduct);
+        return new ProductResponseDTO(savedProduct);
     }
 
     public List<ProductResponseDTO> getAllProducts() {
         log.info("Récupération de tous les produits");
         return productRepository.findAll().stream()
-                .map(this::convertToResponseDTO)
+                .map(ProductResponseDTO::new)
                 .collect(Collectors.toList());
     }
 
     public List<ProductResponseDTO> getProductsByClient(UUID clientId) {
         log.info("Récupération des produits pour le client ID: {}", clientId);
         return productRepository.findByClientUserId(clientId).stream()
-                .map(this::convertToResponseDTO)
+                .map(ProductResponseDTO::new)
                 .collect(Collectors.toList());
     }
 
     public ProductResponseDTO getProductById(UUID productId) {
         log.info("Récupération du produit ID: {}", productId);
         Optional<Product> productOpt = productRepository.findById(productId);
-        return productOpt.map(this::convertToResponseDTO).orElse(null);
+        return productOpt.map(ProductResponseDTO::new).orElse(null);
     }
 
     @Transactional
@@ -128,7 +133,7 @@ public class ProductService {
         log.info("Produit mis à jour avec succès. ID: {} - Nouveau prix: {}",
                 productId, updatedProduct.getFormattedPrice());
 
-        return convertToResponseDTO(updatedProduct);
+        return new ProductResponseDTO(updatedProduct);
     }
 
     @Transactional
@@ -146,41 +151,41 @@ public class ProductService {
     public List<ProductResponseDTO> searchProductsByName(UUID clientId, String name) {
         log.info("Recherche de produits contenant '{}' pour le client ID: {}", name, clientId);
         return productRepository.findByClientUserIdAndNameContainingIgnoreCase(clientId, name).stream()
-                .map(this::convertToResponseDTO)
+                .map(ProductResponseDTO::new)
                 .collect(Collectors.toList());
     }
 
     public ProductResponseDTO findProductByBarcode(UUID clientId, String barcode) {
         log.info("Recherche de produit avec le code-barres '{}' pour le client ID: {}", barcode, clientId);
         Product product = productRepository.findByClientAndBarcode(clientId, barcode);
-        return product != null ? convertToResponseDTO(product) : null;
+        return product != null ? new ProductResponseDTO(product) : null;
     }
 
     public List<ProductResponseDTO> getProductsByCategory(UUID categoryId) {
         log.info("Récupération des produits pour la catégorie ID: {}", categoryId);
         return productRepository.findByCategoryCategoryId(categoryId).stream()
-                .map(this::convertToResponseDTO)
+                .map(ProductResponseDTO::new)
                 .collect(Collectors.toList());
     }
 
     public List<ProductResponseDTO> getProductsByBrand(UUID clientId, String brand) {
         log.info("Récupération des produits de la marque '{}' pour le client ID: {}", brand, clientId);
         return productRepository.findByClientUserIdAndBrandIgnoreCase(clientId, brand).stream()
-                .map(this::convertToResponseDTO)
+                .map(ProductResponseDTO::new)
                 .collect(Collectors.toList());
     }
 
     public List<ProductResponseDTO> getProductsWithBarcode(UUID clientId) {
         log.info("Récupération des produits avec code-barres pour le client ID: {}", clientId);
         return productRepository.findByClientUserIdAndBarcodeIsNotNull(clientId).stream()
-                .map(this::convertToResponseDTO)
+                .map(ProductResponseDTO::new)
                 .collect(Collectors.toList());
     }
 
     public List<ProductResponseDTO> getProductsWithoutBarcode(UUID clientId) {
         log.info("Récupération des produits sans code-barres pour le client ID: {}", clientId);
         return productRepository.findByClientUserIdAndBarcodeIsNull(clientId).stream()
-                .map(this::convertToResponseDTO)
+                .map(ProductResponseDTO::new)
                 .collect(Collectors.toList());
     }
 
@@ -198,7 +203,7 @@ public class ProductService {
         log.info("🍎 Récupération des produits au poids pour le client ID: {}", clientId);
         return productRepository.findByClientUserId(clientId).stream()
                 .filter(product -> product.getIsSoldByWeight() != null && product.getIsSoldByWeight())
-                .map(this::convertToResponseDTO)
+                .map(ProductResponseDTO::new)
                 .collect(Collectors.toList());
     }
 
@@ -209,7 +214,7 @@ public class ProductService {
         log.info("🍞 Récupération des produits à la pièce pour le client ID: {}", clientId);
         return productRepository.findByClientUserId(clientId).stream()
                 .filter(product -> product.getIsSoldByWeight() == null || !product.getIsSoldByWeight())
-                .map(this::convertToResponseDTO)
+                .map(ProductResponseDTO::new)
                 .collect(Collectors.toList());
     }
 
@@ -219,16 +224,6 @@ public class ProductService {
      * Convertit une entité Product en ProductResponseDTO
      * ✅ MISE À JOUR avec les nouvelles propriétés
      */
-    private ProductResponseDTO convertToResponseDTO(Product product) {
-        ProductResponseDTO dto = new ProductResponseDTO(product);
-
-        // ✅ AJOUT des nouvelles propriétés pour les unités
-        dto.setIsSoldByWeight(product.getIsSoldByWeight());
-        dto.setUnitLabel(product.getUnitLabel());
-        dto.setFormattedPrice(product.getFormattedPrice());
-
-        return dto;
-    }
 
     /**
      * Construit un Product à partir d'un ProductDTO
@@ -244,13 +239,34 @@ public class ProductService {
         product.setCategory(category);
         product.setClient(client);
 
-        // ✅ AJOUT des nouvelles propriétés pour les unités
+        // ✅ PROPRIÉTÉS UNITÉS
         product.setIsSoldByWeight(productDTO.getIsSoldByWeight() != null ? productDTO.getIsSoldByWeight() : false);
         product.setUnitLabel(productDTO.getUnitLabel() != null ? productDTO.getUnitLabel() : "pièce");
 
+        // ✅ NOUVEAUX CHAMPS STOCK
+        product.setPurchasePrice(productDTO.getPurchasePrice());
+        product.setQuantity(productDTO.getQuantity() != null ? productDTO.getQuantity() : 0);
+        product.setReorderThreshold(productDTO.getReorderThreshold());
+
+        if (productDTO.getPurchaseDate() != null) {
+            product.setPurchaseDate(Timestamp.valueOf(productDTO.getPurchaseDate()));
+        }
+
+        if (productDTO.getExpirationDate() != null) {
+            product.setExpirationDate(Timestamp.valueOf(productDTO.getExpirationDate()));
+        }
+
+        // Supplier (optionnel)
+        if (productDTO.getSupplierId() != null && !productDTO.getSupplierId().isEmpty()) {
+            UUID supplierUUID = parseUUID(productDTO.getSupplierId());
+            if (supplierUUID != null) {
+                Optional<Supplier> supplierOpt = supplierRepository.findById(supplierUUID);
+                supplierOpt.ifPresent(product::setSupplier);
+            }
+        }
+
         return product;
     }
-
     /**
      * Met à jour les champs d'un Product
      * ✅ MISE À JOUR avec les nouvelles propriétés
@@ -269,12 +285,42 @@ public class ProductService {
             product.setUnitPrice(productDTO.getUnitPrice());
         }
 
-        // ✅ AJOUT mise à jour des nouvelles propriétés
+        // ✅ PROPRIÉTÉS UNITÉS
         if (productDTO.getIsSoldByWeight() != null) {
             product.setIsSoldByWeight(productDTO.getIsSoldByWeight());
         }
         if (productDTO.getUnitLabel() != null) {
             product.setUnitLabel(productDTO.getUnitLabel());
+        }
+
+        // ✅ NOUVEAUX CHAMPS STOCK
+        if (productDTO.getPurchasePrice() != null) {
+            product.setPurchasePrice(productDTO.getPurchasePrice());
+        }
+        if (productDTO.getQuantity() != null) {
+            product.setQuantity(productDTO.getQuantity());
+        }
+        if (productDTO.getReorderThreshold() != null) {
+            product.setReorderThreshold(productDTO.getReorderThreshold());
+        }
+        if (productDTO.getPurchaseDate() != null) {
+            product.setPurchaseDate(Timestamp.valueOf(productDTO.getPurchaseDate()));
+        }
+        if (productDTO.getExpirationDate() != null) {
+            product.setExpirationDate(Timestamp.valueOf(productDTO.getExpirationDate()));
+        }
+
+        // Supplier
+        if (productDTO.getSupplierId() != null) {
+            if (productDTO.getSupplierId().isEmpty()) {
+                product.setSupplier(null);
+            } else {
+                UUID supplierUUID = parseUUID(productDTO.getSupplierId());
+                if (supplierUUID != null) {
+                    Optional<Supplier> supplierOpt = supplierRepository.findById(supplierUUID);
+                    supplierOpt.ifPresent(product::setSupplier);
+                }
+            }
         }
     }
 

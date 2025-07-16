@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import esgi.easisell.service.OptimisticStockService;
 import esgi.easisell.dto.DeferredPaymentCreateDTO;
 import esgi.easisell.dto.DeferredPaymentResponseDTO;
 import esgi.easisell.service.DeferredPaymentService;
@@ -28,7 +27,7 @@ public class SaleController {
 
     private final SaleService saleService;
     private final SecurityUtils securityUtils;
-    private final OptimisticStockService optimisticStockService;
+
     @Autowired
     private DeferredPaymentService deferredPaymentService;
 
@@ -40,10 +39,9 @@ public class SaleController {
     private SaleRepository saleRepository;
 
     // Constructeur explicite avec log
-    public SaleController(SaleService saleService, SecurityUtils securityUtils, OptimisticStockService optimisticStockService) {
+    public SaleController(SaleService saleService, SecurityUtils securityUtils) {
         this.saleService = saleService;
         this.securityUtils = securityUtils;
-        this.optimisticStockService = optimisticStockService;
         log.info("========== SaleController initialisé ! ==========");
     }
 
@@ -427,8 +425,7 @@ public class SaleController {
         }
 
         boolean available = saleService.checkProductAvailability(productId, clientId, quantity);
-        int currentStock = optimisticStockService.getTotalStockQuantity(productId, clientId);
-
+        int currentStock = saleService.getCurrentStock(productId, clientId);
         return ResponseEntity.ok(Map.of(
                 "available", available,
                 "currentStock", currentStock,

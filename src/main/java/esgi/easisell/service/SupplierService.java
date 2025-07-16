@@ -49,7 +49,6 @@ public class SupplierService {
                     supplier.setContactInfo(dto.getContactInfo());
                     supplier.setPhoneNumber(dto.getPhoneNumber());
                     supplier.setClient(client);
-                    supplier.setStockItems(new ArrayList<>());
                     return supplierRepository.save(supplier);
                 });
     }

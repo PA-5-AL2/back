@@ -18,6 +18,7 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
+import java.sql.Timestamp;
 
 @Data
 @Entity
@@ -57,9 +58,39 @@ public class Product {
     @ToString.Exclude
     private Client client;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Column(name = "purchase_price", precision = 19, scale = 2)
+    private BigDecimal purchasePrice;
+
+    @Column(name = "quantity", nullable = false)
+    private Integer quantity = 0;
+
+    @Column(name = "reorder_threshold")
+    private Integer reorderThreshold;
+
+    @Column(name = "purchase_date")
+    private Timestamp purchaseDate;
+
+    @Column(name = "expiration_date")
+    private Timestamp expirationDate;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "supplier_id")
     @ToString.Exclude
-    private List<StockItem> stockItems;
+    private Supplier supplier;
+
+    @Version
+    @Column(name = "version")
+    private Long version;
+
+    @Column(name = "last_modified")
+    private Timestamp lastModified;
+
+    // Callback pour mettre à jour automatiquement le timestamp
+    @PreUpdate
+    @PrePersist
+    protected void onUpdate() {
+        this.lastModified = new Timestamp(System.currentTimeMillis());
+    }
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude

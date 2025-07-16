@@ -16,7 +16,7 @@ import java.util.Map;
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  * @file        : PasswordResetController.java
  * @description : Contrôleur REST pour la gestion des mots de passe oubliés
- * @author      : Votre nom
+ * @author      : SEDDAR SAMIRA
  * @version     : v1.0.0
  * @date        : 08/07/2025
  * @package     : esgi.easisell.controller

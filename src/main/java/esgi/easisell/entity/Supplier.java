@@ -46,5 +46,5 @@ public class Supplier {
 
     @OneToMany(mappedBy = "supplier", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
-    private List<StockItem> stockItems;
+    private List<Product> products = new ArrayList<>();
 }

@@ -16,6 +16,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import esgi.easisell.entity.Product;
+import esgi.easisell.repository.ProductRepository;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.util.Optional;
 
 /**
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -36,6 +41,8 @@ import java.util.stream.Collectors;
 public class ProductController {
 
     private final ProductService productService;
+    private final ProductRepository productRepository;
+
 
     // ========== ENDPOINTS EXISTANTS (inchangés) ==========
 
@@ -593,5 +600,85 @@ public class ProductController {
                     "error", "Erreur lors de la suggestion: " + e.getMessage()
             ));
         }
+    }
+    // === NOUVEAUX ENDPOINTS STOCK ===
+
+    /**
+     * Produits en stock faible
+     * GET /api/products/low-stock?clientId={uuid}
+     */
+    @GetMapping("/low-stock")
+    public ResponseEntity<List<ProductResponseDTO>> getLowStockProducts(@RequestParam UUID clientId) {
+        List<Product> products = productRepository.findLowStockProducts(clientId);
+        List<ProductResponseDTO> response = products.stream()
+                .map(ProductResponseDTO::new)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Produits qui expirent bientôt
+     * GET /api/products/expiring?clientId={uuid}&days=7
+     */
+    @GetMapping("/expiring")
+    public ResponseEntity<List<ProductResponseDTO>> getExpiringProducts(
+            @RequestParam UUID clientId,
+            @RequestParam(defaultValue = "7") int days) {
+        LocalDateTime futureDate = LocalDateTime.now().plusDays(days);
+        List<Product> products = productRepository.findExpiringProducts(clientId, Timestamp.valueOf(futureDate));
+        List<ProductResponseDTO> response = products.stream()
+                .map(ProductResponseDTO::new)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Produits en rupture de stock
+     * GET /api/products/out-of-stock?clientId={uuid}
+     */
+    @GetMapping("/out-of-stock")
+    public ResponseEntity<List<ProductResponseDTO>> getOutOfStockProducts(@RequestParam UUID clientId) {
+        List<Product> products = productRepository.findOutOfStockProducts(clientId);
+        List<ProductResponseDTO> response = products.stream()
+                .map(ProductResponseDTO::new)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Ajuster la quantité d'un produit
+     * PATCH /api/products/{productId}/adjust-quantity?change=5
+     */
+    @PatchMapping("/{productId}/adjust-quantity")
+    public ResponseEntity<?> adjustQuantity(
+            @PathVariable UUID productId,
+            @RequestParam int change) {
+
+        Optional<Product> productOpt = productRepository.findById(productId);
+        if (productOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Product product = productOpt.get();
+        int newQuantity = product.getQuantity() + change;
+
+        if (newQuantity < 0) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Quantité insuffisante",
+                    "currentQuantity", product.getQuantity(),
+                    "requestedChange", change
+            ));
+        }
+
+        product.setQuantity(newQuantity);
+        productRepository.save(product);
+
+        return ResponseEntity.ok(Map.of(
+                "message", "Quantité ajustée avec succès",
+                "productName", product.getName(),
+                "oldQuantity", product.getQuantity() - change,
+                "newQuantity", newQuantity,
+                "change", change
+        ));
     }
 }

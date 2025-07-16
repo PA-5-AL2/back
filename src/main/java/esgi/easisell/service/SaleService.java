@@ -37,9 +37,6 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
     private final ProductRepository productRepository;
     private final ClientRepository clientRepository;
 
-    // ✅ NOUVEAU : Service de gestion optimiste du stock
-    private final OptimisticStockService optimisticStockService;
-
     // Services existants conservés
     private final ISaleValidationService saleValidationService;
     private final ISalePriceCalculator priceCalculator;
@@ -158,14 +155,6 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
             throw new EmptySaleException("Impossible de finaliser une vente vide");
         }
 
-        // ✅ VALIDATION FINALE DU STOCK AVANT PAIEMENT
-        try {
-            optimisticStockService.validateStockBeforeSale(sale);
-        } catch (InsufficientStockException e) {
-            log.error("❌ Stock insuffisant lors de la finalisation: {}", e.getMessage());
-            throw new PaymentFailedException("Stock insuffisant: " + e.getMessage());
-        }
-
         PaymentProcessor paymentProcessor = PaymentProcessorFactory.create(paymentType);
         PaymentResult result = paymentProcessor.processPayment(
                 sale.getTotalAmount(), amountReceived, currency);
@@ -185,17 +174,17 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
 
         paymentRepository.save(payment);
         sale.getPayments().add(payment);
+        for (SaleItem saleItem : sale.getSaleItems()) {
+            Product product = saleItem.getProduct();
+            int requestedQuantity = saleItem.getQuantitySold().intValue();
 
-        // ✅ MISE À JOUR DU STOCK AVEC GESTION OPTIMISTE
-        try {
-            optimisticStockService.decreaseStockForSale(sale);
-            log.info("✅ Stock décrémenté avec succès pour la vente: {}", saleId);
-        } catch (OptimisticLockingFailureException e) {
-            log.error("⚠️ Conflit de concurrence lors de la mise à jour du stock pour la vente: {}", saleId);
-            throw new PaymentFailedException("Conflit de stock détecté. Veuillez réessayer.");
-        } catch (Exception e) {
-            log.error("❌ Erreur lors de la mise à jour du stock: {}", e.getMessage());
-            throw new PaymentFailedException("Erreur lors de la mise à jour du stock: " + e.getMessage());
+            if (product.getQuantity() < requestedQuantity) {
+                throw new PaymentFailedException("Stock insuffisant pour " + product.getName());
+            }
+
+            // Décrémenter le stock
+            product.setQuantity(product.getQuantity() - requestedQuantity);
+            productRepository.save(product);
         }
 
         // Publier l'événement
@@ -245,31 +234,16 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
 
         return ReceiptGenerator.generate(sale);
     }
+    public int getCurrentStock(UUID productId, UUID clientId) {
+        Optional<Product> productOpt = productRepository.findById(productId);
+        if (productOpt.isPresent() && productOpt.get().getClient().getUserId().equals(clientId)) {
+            return productOpt.get().getQuantity();
+        }
+        return 0;
+    }
 
     // ========== MÉTHODES SPÉCIFIQUES À LA GESTION MULTI-CAISSES ==========
 
-    /**
-     * ✅ RÉSERVATION TEMPORAIRE DE STOCK
-     */
-    @Transactional
-    public boolean reserveStockForSale(UUID saleId) {
-        Sale sale = findSaleOrThrow(saleId);
-
-        try {
-            for (SaleItem saleItem : sale.getSaleItems()) {
-                if (!optimisticStockService.reserveStock(
-                        saleItem.getProduct().getProductId(),
-                        sale.getClient().getUserId(),
-                        saleItem.getQuantitySold().intValue())) { // ✅ FIX : conversion vers int
-                    return false;
-                }
-            }
-            return true;
-        } catch (Exception e) {
-            log.error("❌ Erreur lors de la réservation de stock pour la vente: {}", saleId, e);
-            return false;
-        }
-    }
 
     // ========== MÉTHODES EXISTANTES CONSERVÉES ==========
 
@@ -308,11 +282,10 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
      * ✅ VALIDATION DE STOCK AVEC SERVICE OPTIMISTE
      */
     private void validateStockAvailability(Product product, UUID clientId, int requestedQuantity) {
-        if (!optimisticStockService.isStockSufficient(product.getProductId(), clientId, requestedQuantity)) {
-            int availableStock = optimisticStockService.getTotalStockQuantity(product.getProductId(), clientId);
+        if (product.getQuantity() < requestedQuantity) {
             throw new InsufficientStockException(
                     String.format("Stock insuffisant pour %s. Disponible: %d, Demandé: %d",
-                            product.getName(), availableStock, requestedQuantity));
+                            product.getName(), product.getQuantity(), requestedQuantity));
         }
     }
 
@@ -413,14 +386,18 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
      * Vérification de disponibilité de stock avant ajout
      */
     public boolean checkProductAvailability(UUID productId, UUID clientId, BigDecimal quantity) {
-        return optimisticStockService.isStockSufficient(productId, clientId, quantity.intValue());
+        Optional<Product> productOpt = productRepository.findById(productId);
+        if (productOpt.isPresent() && productOpt.get().getClient().getUserId().equals(clientId)) {
+            return productOpt.get().getQuantity() >= quantity.intValue();
+        }
+        return false;
     }
 
     /**
      * Informations de stock en temps réel
      */
     public Map<String, Object> getRealtimeStockInfo(UUID productId, UUID clientId) {
-        int currentStock = optimisticStockService.getTotalStockQuantity(productId, clientId);
+        int currentStock = getCurrentStock(productId, clientId);
 
         // Récupérer le produit pour plus d'infos
         Optional<Product> productOpt = productRepository.findById(productId);
