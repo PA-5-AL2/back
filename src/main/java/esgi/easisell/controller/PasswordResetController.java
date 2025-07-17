@@ -39,7 +39,7 @@ public class PasswordResetController {
     @PostMapping("/request")
     public ResponseEntity<?> requestPasswordReset(@RequestBody PasswordResetRequestDTO requestDTO) {
         try {
-            log.info("🔑 Demande de réinitialisation de mot de passe pour: {}", requestDTO.getEmail());
+            log.info("Demande de réinitialisation de mot de passe pour: {}", requestDTO.getEmail());
 
             boolean success = passwordResetService.requestPasswordReset(requestDTO.getEmail());
 

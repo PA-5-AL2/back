@@ -49,10 +49,10 @@ public class EmailServiceImpl implements EmailService {
             if (user instanceof Client client) {
                 String accessCode = client.getAccessCode();
                 variables.put("accessCode", accessCode);
-                log.info("🔑 Code d'accès du client ajouté: '{}'", accessCode);
+                log.info("Code d'accès du client ajouté: '{}'", accessCode);
             } else {
                 variables.put("accessCode", null);
-                log.info("⚠️ Utilisateur n'est pas un Client, pas de code d'accès");
+                log.info("Utilisateur n'est pas un Client, pas de code d'accès");
             }
 
             // Vérification des valeurs null pour les URLs

@@ -184,13 +184,13 @@ public class ClientRequestService {
         variables.put("termsUrl", frontendUrl + "/terms");
         variables.put("logoUrl", "https://via.placeholder.com/200x80/4CAF50/FFFFFF?text=EasiSell");
 
-        // ✅ VÉRIFICATION FINALE
+        //VÉRIFICATION FINALE
         if (accessCode == null || accessCode.isEmpty()) {
-            log.error("❌ ERREUR CRITIQUE: accessCode est null ou vide!");
+            log.error("ERREUR CRITIQUE: accessCode est null ou vide!");
             throw new EmailException("Code d'accès manquant pour le client: " + client.getUsername());
         }
 
-        log.info("📧 Envoi email avec template: emails/client/pre-inscription");
+        log.info("Envoi email avec template: emails/client/pre-inscription");
 
         emailService.sendHtmlEmail(
                 client.getUsername(),

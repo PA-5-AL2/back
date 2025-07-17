@@ -57,6 +57,8 @@ public class PasswordResetService {
                 return false;
             }
 
+            sendPasswordResetRequest(user);
+
             // Envoyer email de notification aux admins
             notifyAdminsPasswordReset(user);
 
@@ -169,6 +171,40 @@ public class PasswordResetService {
         } catch (EmailException e) {
             log.error("Erreur envoi confirmation changement mot de passe", e);
             throw new RuntimeException("Erreur lors de l'envoi de l'email de confirmation", e);
+        }
+    }
+
+    /**
+     * Envoie un email de demande de réinitialisation à l'utilisateur
+     */
+    private void sendPasswordResetRequest(User user) {
+        try {
+            Map<String, Object> variables = new HashMap<>();
+            variables.put("user", user);
+            variables.put("requestDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy à HH:mm")));
+            variables.put("resetUrl", "https://www.easy-sell-esgi.com/reset-password?email=" + user.getUsername());
+            variables.put("supportEmail", "info@easy-sell.net");
+            variables.put("logoUrl", "https://via.placeholder.com/200x80/4CAF50/FFFFFF?text=EasiSell");
+
+            // Si c'est un client, ajouter des infos spécifiques
+            if (user instanceof Client client) {
+                variables.put("clientName", client.getName());
+                variables.put("userType", "Client");
+            } else {
+                variables.put("clientName", null);
+                variables.put("userType", "Administrateur");
+            }
+
+            emailService.sendHtmlEmail(
+                    user.getUsername(),
+                    "🔐 Réinitialisation de votre mot de passe - EasiSell",
+                    "emails/client/password-reset-request",
+                    variables
+            );
+
+        } catch (EmailException e) {
+            log.error("Erreur envoi email réinitialisation", e);
+            throw new RuntimeException("Erreur lors de l'envoi de l'email de réinitialisation", e);
         }
     }
 }
