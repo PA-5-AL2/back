@@ -178,7 +178,7 @@ public class ClientRequestService {
         log.info("   - accessCode DANS MAP: '{}'", variables.get("accessCode"));
 
         // URLs existantes
-        String frontendUrl = "https://deploy.dr8bqsixqjzkl.amplifyapp.com";
+        String frontendUrl = "https://www.easy-sell-esgi.com/";
         variables.put("loginUrl", frontendUrl + "/login");
         variables.put("contactUrl", "info@easy-sell.net");
         variables.put("termsUrl", frontendUrl + "/terms");
@@ -253,7 +253,7 @@ public class ClientRequestService {
         variables.put("request", request);
         variables.put("user", createUserForTemplate(request));
         variables.put("supportEmail", "info@easy-sell.net");
-        variables.put("contactUrl", "https://deploy.dr8bqsixqjzkl.amplifyapp.com/contact");
+        variables.put("contactUrl", "https://www.easy-sell-esgi.com/contact");
         variables.put("logoUrl", "https://via.placeholder.com/200x80/4CAF50/FFFFFF?text=EasiSell");
 
         emailService.sendHtmlEmail(
@@ -278,10 +278,10 @@ public class ClientRequestService {
                 Map<String, Object> variables = new HashMap<>();
                 variables.put("request", request);
                 variables.put("adminEmail", adminEmail);
-                variables.put("dashboardUrl", "https://deploy.dr8bqsixqjzkl.amplifyapp.com/admin/requests");
-                variables.put("approveUrl", "https://deploy.dr8bqsixqjzkl.amplifyapp.com/admin/requests/" + request.getRequestId() + "/approve");
+                variables.put("dashboardUrl", "https://www.easy-sell-esgi.com/admin/requests");
+                variables.put("approveUrl", "https://www.easy-sell-esgi.com/admin/requests/" + request.getRequestId() + "/approve");
                 variables.put("contactUrl", "mailto:" + request.getEmail() + "?subject=Re: Demande EasiSell - " + request.getCompanyName());
-                variables.put("rejectUrl", "https://deploy.dr8bqsixqjzkl.amplifyapp.com/admin/requests/" + request.getRequestId() + "/reject");
+                variables.put("rejectUrl", "https://www.easy-sell-esgi.com/admin/requests/" + request.getRequestId() + "/reject");
                 variables.put("logoUrl", "https://via.placeholder.com/200x80/4CAF50/FFFFFF?text=EasiSell");
 
                 emailService.sendHtmlEmail(

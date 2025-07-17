@@ -108,8 +108,8 @@ public class PasswordResetService {
                 variables.put("user", user);
                 variables.put("adminEmail", adminEmail);
                 variables.put("requestDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy à HH:mm")));
-                variables.put("dashboardUrl", "https://deploy.dr8bqsixqjzkl.amplifyapp.com/admin/users");
-                variables.put("userManagementUrl", "https://deploy.dr8bqsixqjzkl.amplifyapp.com/admin/users/" + user.getUserId());
+                variables.put("dashboardUrl", "https://www.easy-sell-esgi.com/admin/users");
+                variables.put("userManagementUrl", "https://www.easy-sell-esgi.com/admin/users/" + user.getUserId());
                 variables.put("logoUrl", "https://via.placeholder.com/200x80/4CAF50/FFFFFF?text=EasiSell");
 
                 // Différencier le type d'utilisateur pour le template
@@ -146,7 +146,7 @@ public class PasswordResetService {
             Map<String, Object> variables = new HashMap<>();
             variables.put("user", user);
             variables.put("changeDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy à HH:mm")));
-            variables.put("loginUrl", "https://deploy.dr8bqsixqjzkl.amplifyapp.com/login");
+            variables.put("loginUrl", "https://www.easy-sell-esgi.com/login");
             variables.put("supportEmail", "info@easy-sell.net");
             variables.put("logoUrl", "https://via.placeholder.com/200x80/4CAF50/FFFFFF?text=EasiSell");
 

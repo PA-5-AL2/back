@@ -56,7 +56,7 @@ public class EmailServiceImpl implements EmailService {
             }
 
             // Vérification des valeurs null pour les URLs
-            String frontendUrl = env.getProperty("app.frontend.url", "https://deploy.dr8bqsixqjzkl.amplifyapp.com");
+            String frontendUrl = env.getProperty("app.frontend.url", "https://www.easy-sell-esgi.com");
             variables.put("loginUrl", frontendUrl + "/login");
             variables.put("contactUrl", env.getProperty("app.contact.url", "info@easy-sell.net"));
             variables.put("termsUrl", env.getProperty("app.terms.url", frontendUrl + "/terms"));
@@ -197,7 +197,7 @@ public class EmailServiceImpl implements EmailService {
             variables.put("logoUrl", "https://via.placeholder.com/200x80/4CAF50/FFFFFF?text=EasiSell");
 
             // URL pour gérer la demande (optionnel)
-            String frontendUrl = env.getProperty("app.frontend.url", "https://deploy.dr8bqsixqjzkl.amplifyapp.com");
+            String frontendUrl = env.getProperty("app.frontend.url", "https://www.easy-sell-esgi.com");
             variables.put("manageUrl", frontendUrl + "/client/employee-access");
 
             sendHtmlEmail(

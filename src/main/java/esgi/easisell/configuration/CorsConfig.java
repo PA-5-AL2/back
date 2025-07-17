@@ -23,7 +23,7 @@ public class CorsConfig {
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
                         .allowedOrigins(
-                                "https://deploy.dr8bqsixqjzkl.amplifyapp.com",
+                                "https://www.easy-sell-esgi.com/",
                                 "https://daczefio43x4x.cloudfront.net"
                         )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")

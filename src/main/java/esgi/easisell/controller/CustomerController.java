@@ -1,6 +1,7 @@
 package esgi.easisell.controller;
 
 import esgi.easisell.dto.*;
+import esgi.easisell.entity.Customer;
 import esgi.easisell.service.CustomerService;
 import esgi.easisell.service.DeferredPaymentService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,6 +37,7 @@ public class CustomerController {
         log.info("Reconnaissance client: {} / {}", recognitionDTO.getFullName(), recognitionDTO.getPhone());
 
         try {
+            // Étape 1: Tenter la reconnaissance
             CustomerRecognitionResponseDTO response = deferredPaymentService.recognizeCustomerForPayment(
                     recognitionDTO.getClientId(),
                     recognitionDTO.getFullName(),
@@ -43,9 +45,28 @@ public class CustomerController {
                     BigDecimal.valueOf(100)
             );
 
+            // Étape 2: Si pas reconnu, CRÉER le client
+            if (!response.isRecognized()) {
+                log.info("Client non reconnu, création automatique...");
+
+                // Créer le client en base de données
+                Customer newCustomer = customerService.createCustomerFromPayment(
+                        recognitionDTO.getClientId(),
+                        recognitionDTO.getFullName(),
+                        recognitionDTO.getPhone()
+                );
+
+                log.info("Client créé avec succès: {} (ID: {})",
+                        newCustomer.getFullName(), newCustomer.getCustomerId());
+
+                // Retourner une réponse positive avec le nouveau client
+                response = new CustomerRecognitionResponseDTO(newCustomer, BigDecimal.valueOf(100));
+            }
+
             return ResponseEntity.ok(response);
+
         } catch (Exception e) {
-            log.error("Erreur lors de la reconnaissance client", e);
+            log.error("Erreur lors de la reconnaissance/création client", e);
             return ResponseEntity.badRequest()
                     .body(Map.of("error", e.getMessage()));
         }
