@@ -197,7 +197,7 @@ public class PasswordResetService {
 
             emailService.sendHtmlEmail(
                     user.getUsername(),
-                    "🔐 Réinitialisation de votre mot de passe - EasiSell",
+                    "Réinitialisation de votre mot de passe - EasiSell",
                     "emails/client/password-reset-request",
                     variables
             );
