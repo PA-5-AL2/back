@@ -1,21 +1,3 @@
-package esgi.easisell.controller;
-
-import esgi.easisell.dto.CategoryDTO;
-import esgi.easisell.dto.CategoryResponseDTO;
-import esgi.easisell.entity.Category;
-import esgi.easisell.service.CategoryService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
 /**
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  * PROJET EASISELL - PLATEFORME DE GESTION COMMERCIALE
@@ -34,6 +16,24 @@ import java.util.stream.Collectors;
  * - Mise à jour partielle (PATCH)
  * - Filtrage par client
  */
+package esgi.easisell.controller;
+
+import esgi.easisell.dto.CategoryDTO;
+import esgi.easisell.dto.CategoryResponseDTO;
+import esgi.easisell.entity.Category;
+import esgi.easisell.service.CategoryService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 @RestController
 @RequestMapping("/api/categories")
 @RequiredArgsConstructor
@@ -64,7 +64,6 @@ public class CategoryController {
     /**
      * Récupérer toutes les catégories du système
      * GET /api/categories
-     *
      * ATTENTION : Endpoint admin - retourne TOUTES les catégories
      *
      * @return la liste complète des catégories
@@ -80,7 +79,6 @@ public class CategoryController {
     /**
      * Récupérer les catégories d'un client spécifique
      * GET /api/categories/client/{clientId}
-     *
      * Endpoint principal pour les supérettes
      *
      * @param clientId l'identifiant du client propriétaire
@@ -111,7 +109,6 @@ public class CategoryController {
     /**
      * Mettre à jour une catégorie existante
      * PUT /api/categories/{categoryId}
-     *
      * Note : Mise à jour complète (tous les champs)
      *
      * @param categoryId l'identifiant de la catégorie à modifier
@@ -135,8 +132,7 @@ public class CategoryController {
     /**
      * Supprimer une catégorie du système
      * DELETE /api/categories/{categoryId}
-     *
-     * ⚠️ ATTENTION : Suppression définitive (cascade sur produits associés)
+     * ATTENTION : Suppression définitive (cascade sur produits associés)
      *
      * @param categoryId l'identifiant de la catégorie à supprimer
      * @return confirmation de suppression ou 404 si inexistante
@@ -154,8 +150,7 @@ public class CategoryController {
     /**
      * Rechercher des catégories par nom
      * GET /api/categories/search?clientId={id}&name={texte}
-     *
-     * 🔍 Recherche insensible à la casse avec LIKE %texte%
+     * Recherche insensible à la casse avec LIKE %texte%
      *
      * @param clientId l'identifiant du client (scope de recherche)
      * @param name le texte à rechercher dans le nom de la catégorie
@@ -174,8 +169,7 @@ public class CategoryController {
     /**
      * Mettre à jour partiellement une catégorie
      * PATCH /api/categories/{categoryId}
-     *
-     * ✏️ Mise à jour partielle - modifie seulement les champs fournis
+     * Mise à jour partielle - modifie seulement les champs fournis
      *
      * @param categoryId l'identifiant de la catégorie à modifier
      * @param updates les champs à mettre à jour (format clé-valeur)

@@ -1,8 +1,3 @@
-package esgi.easisell.controller;
-
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 /**
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  * PROJET EASISELL - PLATEFORME DE GESTION COMMERCIALE
@@ -14,21 +9,24 @@ import org.springframework.web.bind.annotation.RestController;
  * @date        : 19/04/2025
  * @package     : esgi.easisell.controller
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- *
  * Ce contrôleur expose les endpoints de base du système :
  * - Endpoint de santé / vérification du service
  * - Page d'accueil de l'API
  */
+package esgi.easisell.controller;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 @RestController
 public class BackendController {
 
     /**
      * Endpoint de vérification du service
      * GET /
-     *
      * Page d'accueil de l'API - vérification que le service est actif
      *
-     * @return message de bienvenue
+     * @return message de Hello World
      */
     @GetMapping("/")
     public String sayHello() {

@@ -25,7 +25,7 @@ public class CustomerController {
     private final DeferredPaymentService deferredPaymentService;
 
     /**
-     * 🔍 ENDPOINT CLÉ : Reconnaître un client pour paiement différé
+     * ENDPOINT CLÉ : Reconnaître un client pour paiement différé
      * POST /api/customers/recognize
      */
     @PostMapping("/recognize")
@@ -40,7 +40,7 @@ public class CustomerController {
                     recognitionDTO.getClientId(),
                     recognitionDTO.getFullName(),
                     recognitionDTO.getPhone(),
-                    BigDecimal.valueOf(100) // Montant par défaut pour l'analyse
+                    BigDecimal.valueOf(100)
             );
 
             return ResponseEntity.ok(response);

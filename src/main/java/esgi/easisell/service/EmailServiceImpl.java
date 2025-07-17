@@ -30,9 +30,11 @@ public class EmailServiceImpl implements EmailService {
     private final TemplateEngine templateEngine;
     private final Environment env;
 
-    @Value("${spring.mail.username:no-reply@easisell.com}")
+    @Value("${spring.mail.username:easysell@gmail.com}")
     private String fromEmail;
 
+    @Value("${spring.mail.from.name:EasiSell Support}")
+    private String fromName;
 
     @Async
     @Override
@@ -156,14 +158,22 @@ public class EmailServiceImpl implements EmailService {
 
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom(fromEmail);
+
+            // Amélioration: utiliser setFrom avec nom et email
+            try {
+                helper.setFrom(fromEmail, fromName);
+            } catch (Exception e) {
+                // Fallback si le nom pose problème
+                helper.setFrom(fromEmail);
+            }
+
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(content, true);
 
-            log.debug("Envoi de l'email à: {}", to);
+            log.debug("Envoi de l'email depuis: {} vers: {}", fromEmail, to);
             mailSender.send(message);
-            log.info("Email envoyé avec succès à: {}", to);
+            log.info("Email envoyé avec succès depuis {} vers: {}", fromEmail, to);
         } catch (MessagingException e) {
             log.error("Erreur lors de la création/envoi de l'email à: {}", to, e);
             throw new EmailException("Erreur lors de la création/envoi de l'email à: " + to, e);

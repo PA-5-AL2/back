@@ -1,17 +1,12 @@
 package esgi.easisell.configuration;
 
-import esgi.easisell.exception.InvalidJwtTokenException;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.SignatureException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
-
 import javax.crypto.spec.SecretKeySpec;
 import java.security.Key;
 import java.util.Date;
@@ -19,6 +14,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+/**
+ * The type Jwt utils.
+ */
 @Component
 @Slf4j
 public class JwtUtils {
@@ -31,6 +29,11 @@ public class JwtUtils {
 
     /**
      * Génération du token avec informations minimales
+     *
+     * @param username the username
+     * @param role     the role
+     * @param userId   the user id
+     * @return the string
      */
     public String generateToken(String username, String role, String userId) {
         log.debug("Génération du token pour l'utilisateur: {}", username);
@@ -44,6 +47,9 @@ public class JwtUtils {
 
     /**
      * Génération du token simple
+     *
+     * @param username the username
+     * @return the string
      */
     public String generateToken(String username) {
         log.debug("Génération du token simple pour: {}", username);
@@ -52,6 +58,10 @@ public class JwtUtils {
 
     /**
      * Validation du token
+     *
+     * @param token       the token
+     * @param userDetails the user details
+     * @return the boolean
      */
     public Boolean validateToken(String token, UserDetails userDetails) {
         try {
@@ -65,6 +75,9 @@ public class JwtUtils {
 
     /**
      * Extraction du nom d'utilisateur
+     *
+     * @param token the token
+     * @return the string
      */
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -72,6 +85,9 @@ public class JwtUtils {
 
     /**
      * Extraction du rôle utilisateur
+     *
+     * @param token the token
+     * @return the string
      */
     public String extractRole(String token) {
         return extractClaim(token, claims -> claims.get("role", String.class));
@@ -79,14 +95,13 @@ public class JwtUtils {
 
     /**
      * Extraction de l'ID utilisateur
+     *
+     * @param token the token
+     * @return the string
      */
     public String extractUserId(String token) {
         return extractClaim(token, claims -> claims.get("userId", String.class));
     }
-
-    // ========================================
-    // MÉTHODES PRIVÉES
-    // ========================================
 
     /**
      * Création du token JWT plus court

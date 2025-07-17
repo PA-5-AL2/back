@@ -44,15 +44,13 @@ public class ProductController {
     private final ProductRepository productRepository;
 
 
-    // ========== ENDPOINTS EXISTANTS (inchangés) ==========
-
     /**
      * Créer un nouveau produit
      * POST /api/products
      */
     @PostMapping
     public ResponseEntity<?> createProduct(@RequestBody ProductDTO productDTO) {
-        log.info("🆕 Création produit: {} - Type: {} - Prix: {} €/{}",
+        log.info("Création produit: {} - Type: {} - Prix: {} €/{}",
                 productDTO.getName(),
                 productDTO.getIsSoldByWeight() ? "poids" : "pièce",
                 productDTO.getUnitPrice(),
@@ -112,7 +110,7 @@ public class ProductController {
      */
     @PutMapping("/{productId}")
     public ResponseEntity<?> updateProduct(@PathVariable UUID productId, @RequestBody ProductDTO productDTO) {
-        log.info("🔄 Mise à jour produit {}: {} - Type: {} - Prix: {} €/{}",
+        log.info("Mise à jour produit {}: {} - Type: {} - Prix: {} €/{}",
                 productId,
                 productDTO.getName(),
                 productDTO.getIsSoldByWeight() ? "poids" : "pièce",
@@ -208,52 +206,52 @@ public class ProductController {
     // ========== NOUVEAUX ENDPOINTS POUR GESTION DES UNITÉS ==========
 
     /**
-     * 🍎 Produits vendus au poids (fruits, légumes, viandes)
+     * Produits vendus au poids (fruits, légumes, viandes)
      * GET /api/products/by-weight?clientId={uuid}
      */
     @GetMapping("/by-weight")
     public ResponseEntity<List<ProductResponseDTO>> getProductsByWeight(@RequestParam UUID clientId) {
-        log.info("🍎 Récupération des produits au poids pour le client: {}", clientId);
+        log.info("Récupération des produits au poids pour le client: {}", clientId);
 
         List<ProductResponseDTO> weightProducts = productService.getProductsByWeight(clientId);
 
-        log.info("✅ Trouvé {} produits vendus au poids", weightProducts.size());
+        log.info("Trouvé {} produits vendus au poids", weightProducts.size());
         return ResponseEntity.ok(weightProducts);
     }
 
     /**
-     * 🍞 Produits vendus à la pièce/unité
+     * Produits vendus à la pièce/unité
      * GET /api/products/by-piece?clientId={uuid}
      */
     @GetMapping("/by-piece")
     public ResponseEntity<List<ProductResponseDTO>> getProductsByPiece(@RequestParam UUID clientId) {
-        log.info("🍞 Récupération des produits à la pièce pour le client: {}", clientId);
+        log.info("Récupération des produits à la pièce pour le client: {}", clientId);
 
         List<ProductResponseDTO> pieceProducts = productService.getProductsByPiece(clientId);
 
-        log.info("✅ Trouvé {} produits vendus à la pièce", pieceProducts.size());
+        log.info("Trouvé {} produits vendus à la pièce", pieceProducts.size());
         return ResponseEntity.ok(pieceProducts);
     }
 
     /**
-     * 📋 Grouper les produits par unité
+     * Grouper les produits par unité
      * GET /api/products/by-unit?clientId={uuid}
      */
     @GetMapping("/by-unit")
     public ResponseEntity<Map<String, List<ProductResponseDTO>>> getProductsByUnit(@RequestParam UUID clientId) {
-        log.info("📋 Groupement des produits par unité pour le client: {}", clientId);
+        log.info("Groupement des produits par unité pour le client: {}", clientId);
 
         List<ProductResponseDTO> allProducts = productService.getProductsByClient(clientId);
         Map<String, List<ProductResponseDTO>> productsByUnit = allProducts.stream()
                 .collect(Collectors.groupingBy(product ->
                         product.getUnitLabel() != null ? product.getUnitLabel() : "unité"));
 
-        log.info("✅ Produits groupés en {} unités différentes", productsByUnit.size());
+        log.info("Produits groupés en {} unités différentes", productsByUnit.size());
         return ResponseEntity.ok(productsByUnit);
     }
 
     /**
-     * 💰 Calculer le prix pour une quantité donnée
+     * Calculer le prix pour une quantité donnée
      * GET /api/products/{productId}/calculate-price?quantity=2.350
      */
     @GetMapping("/{productId}/calculate-price")
@@ -261,7 +259,7 @@ public class ProductController {
             @PathVariable UUID productId,
             @RequestParam BigDecimal quantity) {
 
-        log.info("💰 Calcul du prix pour produit {} avec quantité {}", productId, quantity);
+        log.info("Calcul du prix pour produit {} avec quantité {}", productId, quantity);
 
         try {
             ProductResponseDTO product = productService.getProductById(productId);
@@ -318,13 +316,13 @@ public class ProductController {
             response.put("formattedTotalPrice", String.format("%.2f €", totalPrice));
             response.put("timestamp", System.currentTimeMillis());
 
-            log.info("✅ Prix calculé: {} pour {}",
+            log.info("Prix calculé: {} pour {}",
                     String.format("%.2f €", totalPrice), formattedQuantity);
 
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            log.error("❌ Erreur lors du calcul de prix: {}", e.getMessage());
+            log.error("Erreur lors du calcul de prix: {}", e.getMessage());
             return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "error", "Erreur lors du calcul: " + e.getMessage()
@@ -333,7 +331,7 @@ public class ProductController {
     }
 
     /**
-     * ✅ Valider une quantité selon les règles du produit
+     * Valider une quantité selon les règles du produit
      * GET /api/products/{productId}/validate-quantity?quantity=2.5
      */
     @GetMapping("/{productId}/validate-quantity")
@@ -341,7 +339,7 @@ public class ProductController {
             @PathVariable UUID productId,
             @RequestParam BigDecimal quantity) {
 
-        log.info("✅ Validation de quantité {} pour produit {}", quantity, productId);
+        log.info("Validation de quantité {} pour produit {}", quantity, productId);
 
         try {
             ProductResponseDTO product = productService.getProductById(productId);
@@ -386,13 +384,13 @@ public class ProductController {
                     "timestamp", System.currentTimeMillis()
             );
 
-            log.info("📊 Validation: {} - {}",
-                    isValid ? "✅ VALIDE" : "❌ INVALIDE", message);
+            log.info("Validation: {} - {}",
+                    isValid ? "VALIDE" : "INVALIDE", message);
 
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            log.error("❌ Erreur lors de la validation: {}", e.getMessage());
+            log.error("Erreur lors de la validation: {}", e.getMessage());
             return ResponseEntity.badRequest().body(Map.of(
                     "isValid", false,
                     "message", "Erreur lors de la validation: " + e.getMessage()
@@ -401,12 +399,12 @@ public class ProductController {
     }
 
     /**
-     * 📊 Statistiques des produits par type d'unité
+     * Statistiques des produits par type d'unité
      * GET /api/products/stats?clientId={uuid}
      */
     @GetMapping("/stats")
     public ResponseEntity<?> getProductStats(@RequestParam UUID clientId) {
-        log.info("📊 Génération des statistiques pour le client: {}", clientId);
+        log.info("Génération des statistiques pour le client: {}", clientId);
 
         try {
             List<ProductResponseDTO> allProducts = productService.getProductsByClient(clientId);
@@ -450,13 +448,13 @@ public class ProductController {
                     "timestamp", System.currentTimeMillis()
             );
 
-            log.info("✅ Statistiques générées: {} produits total ({} poids, {} pièces)",
+            log.info("Statistiques générées: {} produits total ({} poids, {} pièces)",
                     totalProducts, weightProducts, pieceProducts);
 
             return ResponseEntity.ok(stats);
 
         } catch (Exception e) {
-            log.error("❌ Erreur lors de la génération des statistiques: {}", e.getMessage());
+            log.error("Erreur lors de la génération des statistiques: {}", e.getMessage());
             return ResponseEntity.badRequest().body(Map.of(
                     "error", "Erreur lors de la génération des statistiques: " + e.getMessage()
             ));
@@ -464,7 +462,7 @@ public class ProductController {
     }
 
     /**
-     * 🔄 Convertir un produit pièce vers poids (ou inverse)
+     * Convertir un produit pièce vers poids (ou inverse)
      * PUT /api/products/{productId}/convert-unit
      */
     @PutMapping("/{productId}/convert-unit")
@@ -472,7 +470,7 @@ public class ProductController {
             @PathVariable UUID productId,
             @RequestBody Map<String, Object> conversionData) {
 
-        log.info("🔄 Conversion d'unité pour le produit: {}", productId);
+        log.info("Conversion d'unité pour le produit: {}", productId);
 
         try {
             ProductResponseDTO product = productService.getProductById(productId);
@@ -499,7 +497,7 @@ public class ProductController {
             ProductResponseDTO updatedProduct = productService.updateProduct(productId, updateDTO);
 
             if (updatedProduct != null) {
-                log.info("✅ Produit converti: {} -> Type: {} ({})",
+                log.info("Produit converti: {} -> Type: {} ({})",
                         updatedProduct.getName(),
                         updatedProduct.getIsSoldByWeight() ? "poids" : "pièce",
                         updatedProduct.getFormattedPrice());
@@ -519,7 +517,7 @@ public class ProductController {
             }
 
         } catch (Exception e) {
-            log.error("❌ Erreur lors de la conversion: {}", e.getMessage());
+            log.error("Erreur lors de la conversion: {}", e.getMessage());
             return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "error", "Erreur lors de la conversion: " + e.getMessage()
@@ -528,7 +526,7 @@ public class ProductController {
     }
 
     /**
-     * 🏷️ Suggestion de prix basée sur des produits similaires
+     * Suggestion de prix basée sur des produits similaires
      * GET /api/products/suggest-price?clientId={uuid}&name={nom}&unitLabel={unite}
      */
     @GetMapping("/suggest-price")
@@ -537,7 +535,7 @@ public class ProductController {
             @RequestParam String name,
             @RequestParam(required = false) String unitLabel) {
 
-        log.info("🏷️ Suggestion de prix pour: {} (unité: {})", name, unitLabel);
+        log.info("Suggestion de prix pour: {} (unité: {})", name, unitLabel);
 
         try {
             List<ProductResponseDTO> allProducts = productService.getProductsByClient(clientId);
@@ -589,13 +587,13 @@ public class ProductController {
                     "totalSimilar", similarProducts.size()
             );
 
-            log.info("✅ Prix suggéré: {} € basé sur {} produits similaires",
+            log.info("Prix suggéré: {} € basé sur {} produits similaires",
                     recommendedPrice, similarProducts.size());
 
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            log.error("❌ Erreur lors de la suggestion de prix: {}", e.getMessage());
+            log.error("Erreur lors de la suggestion de prix: {}", e.getMessage());
             return ResponseEntity.badRequest().body(Map.of(
                     "error", "Erreur lors de la suggestion: " + e.getMessage()
             ));
