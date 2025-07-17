@@ -1,15 +1,3 @@
-/**
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * 🚀 PROJET EASISELL - PLATEFORME DE GESTION COMMERCIALE
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * @file        : Product.java
- * @description : Entité produit commercialisé
- * @author      : Chancy MOUYABI
- * @version     : v1.0.0
- * @date        : 03/07/2025
- * @package     : esgi.easisell.entity
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- */
 package esgi.easisell.entity;
 
 import jakarta.persistence.*;
@@ -20,6 +8,18 @@ import java.math.RoundingMode;
 import java.util.*;
 import java.sql.Timestamp;
 
+/**
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * 🚀 PROJET EASISELL - PLATEFORME DE GESTION COMMERCIALE
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * @file        : Product.java
+ * @description : Entité produit commercialisé (avec support promotions)
+ * @author      : SEDDAR SAMIRA
+ * @version     : v2.0.0
+ * @date        : 2/07/2025
+ * @package     : esgi.easisell.entity
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ */
 @Data
 @Entity
 @NoArgsConstructor
@@ -43,7 +43,7 @@ public class Product {
     @Column(name = "barcode")
     private String barcode;
 
-    private String brand; // MARQUE : CACO...
+    private String brand;
 
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal unitPrice;
@@ -85,17 +85,6 @@ public class Product {
     @Column(name = "last_modified")
     private Timestamp lastModified;
 
-    // Callback pour mettre à jour automatiquement le timestamp
-    @PreUpdate
-    @PrePersist
-    protected void onUpdate() {
-        this.lastModified = new Timestamp(System.currentTimeMillis());
-    }
-
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    @ToString.Exclude
-    private List<Promotion> promotions;
-
     /**
      * Type de vente : true = au poids (kg), false = à la pièce
      */
@@ -108,26 +97,195 @@ public class Product {
     @Column(length = 10, nullable = false)
     private String unitLabel = "pièce";
 
+    // ========== RELATION AVEC LES PROMOTIONS ==========
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    private List<Promotion> promotions = new ArrayList<>();
+
+    // ========== CALLBACKS ==========
+    @PreUpdate
+    @PrePersist
+    protected void onUpdate() {
+        this.lastModified = new Timestamp(System.currentTimeMillis());
+    }
+
+    // ========== MÉTHODES MÉTIER ==========
+
     /**
      * Calcule le prix total pour une quantité (avec 2 décimales)
      */
     public BigDecimal calculateTotalPrice(BigDecimal quantity) {
-        if (quantity == null || unitPrice == null) {
+        if (quantity == null) {
             return BigDecimal.ZERO;
         }
-        return unitPrice.multiply(quantity).setScale(2, RoundingMode.HALF_UP);
+
+        BigDecimal currentPrice = getCurrentPrice();
+        return currentPrice.multiply(quantity).setScale(2, RoundingMode.HALF_UP);
     }
 
     /**
-     * Formate le prix : "4.50 €/kg" ou "2.80 €/pièce"
+     * Retourne le prix actuel (promotion ou prix normal)
      */
-    public String getFormattedPrice() {
-        return String.format("%.2f €/%s", unitPrice, unitLabel);
+    public BigDecimal getCurrentPrice() {
+        Promotion activePromotion = getActivePromotion();
+        return activePromotion != null ? activePromotion.getPromotionPrice() : unitPrice;
     }
 
-    // Getters/Setters
-    public Boolean getIsSoldByWeight() { return isSoldByWeight; }
-    public void setIsSoldByWeight(Boolean isSoldByWeight) { this.isSoldByWeight = isSoldByWeight; }
-    public String getUnitLabel() { return unitLabel; }
-    public void setUnitLabel(String unitLabel) { this.unitLabel = unitLabel; }
+    /**
+     * Formate le prix avec l'unité
+     */
+    public String getFormattedPrice() {
+        BigDecimal currentPrice = getCurrentPrice();
+        return String.format("%.2f €/%s", currentPrice, unitLabel);
+    }
+
+    /**
+     * Formate le prix avec indication de promotion
+     */
+    public String getFormattedPriceWithPromotion() {
+        Promotion activePromotion = getActivePromotion();
+        if (activePromotion != null) {
+            return String.format("%.2f €/%s (au lieu de %.2f €)",
+                    activePromotion.getPromotionPrice(),
+                    unitLabel,
+                    unitPrice);
+        }
+        return getFormattedPrice();
+    }
+
+    /**
+     * Vérifie si le produit est actuellement en promotion
+     */
+    public boolean isOnPromotion() {
+        return getActivePromotion() != null;
+    }
+
+    /**
+     * Retourne la promotion active (s'il y en a une)
+     */
+    public Promotion getActivePromotion() {
+        if (promotions == null || promotions.isEmpty()) {
+            return null;
+        }
+
+        return promotions.stream()
+                .filter(Promotion::isCurrentlyActive)
+                .findFirst()
+                .orElse(null);
+    }
+
+    /**
+     * Retourne toutes les promotions futures
+     */
+    public List<Promotion> getFuturePromotions() {
+        if (promotions == null || promotions.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        return promotions.stream()
+                .filter(Promotion::isPending)
+                .toList();
+    }
+
+    /**
+     * Retourne toutes les promotions expirées
+     */
+    public List<Promotion> getExpiredPromotions() {
+        if (promotions == null || promotions.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        return promotions.stream()
+                .filter(Promotion::isExpired)
+                .toList();
+    }
+
+    /**
+     * Ajoute une nouvelle promotion
+     */
+    public void addPromotion(Promotion promotion) {
+        if (promotions == null) {
+            promotions = new ArrayList<>();
+        }
+        promotions.add(promotion);
+        promotion.setProduct(this);
+    }
+
+    /**
+     * Supprime une promotion
+     */
+    public void removePromotion(Promotion promotion) {
+        if (promotions != null) {
+            promotions.remove(promotion);
+            promotion.setProduct(null);
+        }
+    }
+
+    /**
+     * Désactive toutes les promotions actives
+     */
+    public void deactivateAllPromotions() {
+        if (promotions != null) {
+            promotions.forEach(promotion -> promotion.setIsActive(false));
+        }
+    }
+
+    /**
+     * Calcule le montant d'économie si en promotion
+     */
+    public BigDecimal getSavingsAmount() {
+        Promotion activePromotion = getActivePromotion();
+        return activePromotion != null ? activePromotion.getSavingsAmount() : BigDecimal.ZERO;
+    }
+
+    /**
+     * Calcule le pourcentage d'économie si en promotion
+     */
+    public BigDecimal getSavingsPercentage() {
+        Promotion activePromotion = getActivePromotion();
+        return activePromotion != null ? activePromotion.getSavingsPercentage() : BigDecimal.ZERO;
+    }
+
+    /**
+     * Retourne les informations de promotion pour l'affichage
+     */
+    public Map<String, Object> getPromotionInfo() {
+        Map<String, Object> info = new HashMap<>();
+        Promotion activePromotion = getActivePromotion();
+
+        if (activePromotion != null) {
+            info.put("isOnPromotion", true);
+            info.put("promotionName", activePromotion.getName());
+            info.put("originalPrice", unitPrice);
+            info.put("promotionPrice", activePromotion.getPromotionPrice());
+            info.put("savings", activePromotion.getSavingsAmount());
+            info.put("savingsPercentage", activePromotion.getSavingsPercentage());
+            info.put("promotionType", activePromotion.getPromotionType());
+            info.put("endDate", activePromotion.getEndDate());
+            info.put("formattedDiscount", activePromotion.getFormattedDiscount());
+        } else {
+            info.put("isOnPromotion", false);
+            info.put("currentPrice", unitPrice);
+        }
+
+        return info;
+    }
+
+    // ========== GETTERS/SETTERS SPÉCIAUX ==========
+
+    public Boolean getIsSoldByWeight() {
+        return isSoldByWeight;
+    }
+
+    public void setIsSoldByWeight(Boolean isSoldByWeight) {
+        this.isSoldByWeight = isSoldByWeight;
+    }
+
+    public String getUnitLabel() {
+        return unitLabel;
+    }
+
+    public void setUnitLabel(String unitLabel) {
+        this.unitLabel = unitLabel;
+    }
 }

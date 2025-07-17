@@ -32,7 +32,7 @@ public class ClientRequestController {
     @PostMapping("/submit")
     public ResponseEntity<?> submitClientRequest(@RequestBody ClientRequestDTO requestDTO) {
         try {
-            log.info("🌟 Nouvelle demande reçue de: {} - {}", requestDTO.getCompanyName(), requestDTO.getEmail());
+            log.info(" Nouvelle demande reçue de: {} - {}", requestDTO.getCompanyName(), requestDTO.getEmail());
 
             ClientRequest request = clientRequestService.submitRequest(requestDTO);
 

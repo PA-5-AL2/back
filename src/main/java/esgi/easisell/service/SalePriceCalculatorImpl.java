@@ -17,7 +17,7 @@ class SalePriceCalculatorImpl implements ISalePriceCalculator {
 
     @Override
     public BigDecimal calculateItemPrice(Product product, BigDecimal quantity) {
-        return product.getUnitPrice().multiply(quantity);
+        return product.getCurrentPrice().multiply(quantity);
     }
 
     @Override
