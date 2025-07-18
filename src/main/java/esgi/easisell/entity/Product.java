@@ -78,10 +78,6 @@ public class Product {
     @ToString.Exclude
     private Supplier supplier;
 
-    @Version
-    @Column(name = "version")
-    private Long version;
-
     @Column(name = "last_modified")
     private Timestamp lastModified;
 
