@@ -18,7 +18,6 @@ import java.util.UUID;
 @RequestMapping("/api/deferred-payments")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "*") // ✅ AUTORISER CORS TEMPORAIREMENT
 public class DeferredPaymentController {
 
     private final DeferredPaymentService deferredPaymentService;

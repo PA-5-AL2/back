@@ -20,7 +20,6 @@ import java.util.UUID;
 @RequestMapping("/api/customers")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "*") // ✅ AUTORISER CORS TEMPORAIREMENT
 public class CustomerController {
 
     private final CustomerService customerService;
