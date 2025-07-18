@@ -97,6 +97,8 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.POST, "/api/users/clients/*/verify-access-code").hasAnyRole("CLIENT", "ADMIN")
                                 .requestMatchers(HttpMethod.PUT, "/api/users/clients/*/access-code/custom").hasAnyRole("CLIENT", "ADMIN")
                                 .requestMatchers("/api/promotions/**").permitAll()
+                                .requestMatchers("/api/deferred-payments/**").permitAll()
+                                .requestMatchers("/api/customers/**").permitAll()
 
                                 .requestMatchers("/api/users/**").hasRole("ADMIN")
 
