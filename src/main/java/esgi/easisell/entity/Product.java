@@ -37,6 +37,10 @@ public class Product {
     @Column(nullable = false)
     private String name;
 
+    @Version
+    private Long version;
+
+
     @Lob
     private String description;
 
@@ -77,6 +81,7 @@ public class Product {
     @JoinColumn(name = "supplier_id")
     @ToString.Exclude
     private Supplier supplier;
+
 
     @Column(name = "last_modified")
     private Timestamp lastModified;

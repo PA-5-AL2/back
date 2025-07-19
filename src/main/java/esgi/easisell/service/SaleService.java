@@ -25,6 +25,8 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 
 @Service
 @RequiredArgsConstructor
@@ -139,11 +141,95 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
 
         updateSaleTotal(sale);
     }
+    // ========== PAIEMENT AVEC GESTION OPTIMISTE CORRIGÉE ==========
+    @Transactional
+    public PaymentResultDTO processPaymentOptimistic(UUID saleId, String paymentType,
+                                                     BigDecimal amountReceived, String currency) {
+        log.info(" Traitement du paiement pour la vente: {} - Type: {}, Montant: {}",
+                saleId, paymentType, amountReceived);
 
-    // ========== PAIEMENT AVEC GESTION OPTIMISTE ==========
+        Sale sale = findSaleOrThrow(saleId);
+        saleValidationService.validateSaleNotFinalized(sale);
+
+        if (sale.getSaleItems().isEmpty()) {
+            throw new EmptySaleException("Impossible de finaliser une vente vide");
+        }
+
+        PaymentProcessor paymentProcessor = PaymentProcessorFactory.create(paymentType);
+        PaymentResult result = paymentProcessor.processPayment(
+                sale.getTotalAmount(), amountReceived, currency);
+
+        if (!result.isSuccessful()) {
+            throw new PaymentFailedException(result.getErrorMessage());
+        }
+
+        // Enregistrer le paiement
+        Payment payment = Payment.builder()
+                .sale(sale)
+                .type(paymentType)
+                .amount(result.getAmountPaid())
+                .currency(currency)
+                .paymentDate(Timestamp.valueOf(LocalDateTime.now()))
+                .build();
+
+        paymentRepository.save(payment);
+        sale.getPayments().add(payment);
+
+        // ========== GESTION OPTIMISTE DU STOCK ==========
+        try {
+            for (SaleItem saleItem : sale.getSaleItems()) {
+                Product product = saleItem.getProduct();
+                int requestedQuantity = saleItem.getQuantitySold().intValue();
+
+                // APPROCHE OPTIMISTE: on décrémente directement
+                int newQuantity = product.getQuantity() - requestedQuantity;
+
+                // Vérification métier (optionnelle selon vos règles)
+                if (newQuantity < 0) {
+                    throw new PaymentFailedException(
+                            "Stock insuffisant pour " + product.getName() +
+                                    " (stock actuel: " + product.getQuantity() +
+                                    ", demandé: " + requestedQuantity + ")"
+                    );
+                }
+
+                product.setQuantity(newQuantity);
+                // Le save() déclenchera automatiquement la vérification de version
+                productRepository.save(product);
+            }
+
+        } catch (OptimisticLockingFailureException e) {
+            // Gestion du conflit optimiste
+            log.warn("Conflit détecté lors de la mise à jour du stock pour la vente: {}", saleId);
+            throw new PaymentFailedException(
+                    "Le stock a été modifié par une autre transaction. Veuillez réessayer."
+            );
+        }
+
+        eventPublisher.publishEvent(new SaleCompletedEvent(sale));
+
+        log.info(" Paiement finalisé avec succès pour la vente: {}", saleId);
+        return PaymentResultMapper.toDTO(result, sale);
+    }
+
+    // ========== VERSION AVANCÉE AVEC RETRY AUTOMATIQUE ==========
+    @Retryable(
+            value = {OptimisticLockingFailureException.class},
+            maxAttempts = 3,
+            backoff = @Backoff(delay = 100)
+    )
     @Override
     @Transactional
     public PaymentResultDTO processPayment(UUID saleId, String paymentType,
+                                           BigDecimal amountReceived, String currency) {
+        log.info("💳 Traitement du paiement avec retry pour la vente: {}", saleId);
+
+        return processPaymentOptimistic(saleId, paymentType, amountReceived, currency);
+    }
+
+    // ========== PAIEMENT AVEC GESTION OPTIMISTE ==========
+    @Transactional
+    public PaymentResultDTO processPayment2(UUID saleId, String paymentType,
                                            BigDecimal amountReceived, String currency) {
         log.info("💳 Traitement du paiement pour la vente: {} - Type: {}, Montant: {}",
                 saleId, paymentType, amountReceived);
