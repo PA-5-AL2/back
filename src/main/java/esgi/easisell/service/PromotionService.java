@@ -157,11 +157,14 @@ public class PromotionService {
     public int deactivateAllPromotionsForProduct(UUID productId) {
         log.info("⏸ Désactivation de toutes les promotions du produit: {}", productId);
 
-        Timestamp now = new Timestamp(System.currentTimeMillis());
+        Timestamp now = getCurrentTimestamp();
         int count = promotionRepository.deactivateAllPromotionsForProduct(productId, now);
 
         log.info(" {} promotions désactivées pour le produit: {}", count, productId);
         return count;
+    }
+    private Timestamp getCurrentTimestamp() {
+        return Timestamp.valueOf(LocalDateTime.now().withNano(0));
     }
 
     // ========== RÉCUPÉRATION DES DONNÉES ==========
@@ -184,7 +187,7 @@ public class PromotionService {
     public List<PromotionResponseDTO> getActivePromotionsByClient(UUID clientId) {
         log.info(" Récupération des promotions actives du client: {}", clientId);
 
-        Timestamp now = new Timestamp(System.currentTimeMillis());
+        Timestamp now = getCurrentTimestamp();
         List<Promotion> promotions = promotionRepository.findActivePromotionsByClient(clientId, now);
 
         return promotions.stream()
@@ -222,7 +225,7 @@ public class PromotionService {
     public List<PromotionResponseDTO> getExpiringSoonPromotions(UUID clientId, int days) {
         log.info(" Recherche des promotions expirant dans {} jours pour le client: {}", days, clientId);
 
-        Timestamp now = new Timestamp(System.currentTimeMillis());
+        Timestamp now = getCurrentTimestamp();
         Timestamp soonDate = Timestamp.valueOf(LocalDateTime.now().plusDays(days));
 
         List<Promotion> promotions = promotionRepository.findExpiringSoonPromotions(clientId, now, soonDate);
@@ -237,7 +240,7 @@ public class PromotionService {
     public List<PromotionResponseDTO> getUpcomingPromotions(UUID clientId, int days) {
         log.info(" Recherche des promotions à venir dans {} jours pour le client: {}", days, clientId);
 
-        Timestamp now = new Timestamp(System.currentTimeMillis());
+        Timestamp now = getCurrentTimestamp();
         Timestamp futureDate = Timestamp.valueOf(LocalDateTime.now().plusDays(days));
 
         List<Promotion> promotions = promotionRepository.findUpcomingPromotions(clientId, now, futureDate);
@@ -266,7 +269,7 @@ public class PromotionService {
     public Map<String, Object> getPromotionStats(UUID clientId) {
         log.info(" Génération des statistiques promotions pour le client: {}", clientId);
 
-        Timestamp now = new Timestamp(System.currentTimeMillis());
+        Timestamp now = getCurrentTimestamp();
 
         long totalPromotions = promotionRepository.findByClientUserId(clientId).size();
         long activePromotions = promotionRepository.countActivePromotionsByClient(clientId, now);
@@ -300,9 +303,9 @@ public class PromotionService {
     @Scheduled(fixedRate = 3600000) // 1 heure
     @Transactional
     public void deactivateExpiredPromotions() {
-        log.info("🧹 Nettoyage automatique des promotions expirées");
+        log.info(" Nettoyage automatique des promotions expirées");
 
-        Timestamp now = new Timestamp(System.currentTimeMillis());
+        Timestamp now = getCurrentTimestamp();
         int deactivated = promotionRepository.deactivateExpiredPromotions(now);
 
         if (deactivated > 0) {

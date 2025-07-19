@@ -48,7 +48,7 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
     @Override
     @Transactional
     public SaleResponseDTO createNewSale(UUID clientId) {
-        log.info("🛒 Création d'une nouvelle vente pour le client: {}", clientId);
+        log.info(" Création d'une nouvelle vente pour le client: {}", clientId);
 
         Client client = clientRepository.findById(clientId)
                 .orElseThrow(() -> new ClientNotFoundException(clientId));
@@ -62,7 +62,7 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
         sale.setPayments(new ArrayList<>());
 
         Sale savedSale = saleRepository.save(sale);
-        log.info("✅ Vente créée avec l'ID: {}", savedSale.getSaleId());
+        log.info(" Vente créée avec l'ID: {}", savedSale.getSaleId());
 
         return SaleMapper.toResponseDTO(savedSale);
     }
@@ -71,7 +71,7 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
     @Override
     @Transactional
     public SaleItemResponseDTO addProductToSale(UUID saleId, String barcode, BigDecimal quantity) {
-        log.info("🔍 Scan du produit {} (quantité: {}) pour la vente {}", barcode, quantity, saleId);
+        log.info(" Scan du produit {} (quantité: {}) pour la vente {}", barcode, quantity, saleId);
 
         Sale sale = findSaleOrThrow(saleId);
         saleValidationService.validateSaleNotFinalized(sale);
@@ -89,7 +89,7 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
     @Override
     @Transactional
     public SaleItemResponseDTO addProductByIdToSale(UUID saleId, UUID productId, BigDecimal quantity) {
-        log.info("➕ Ajout manuel du produit {} (quantité: {}) à la vente {}", productId, quantity, saleId);
+        log.info(" Ajout manuel du produit {} (quantité: {}) à la vente {}", productId, quantity, saleId);
 
         Sale sale = findSaleOrThrow(saleId);
         saleValidationService.validateSaleNotFinalized(sale);
@@ -114,7 +114,7 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
 
         saleValidationService.validateSaleNotFinalized(saleItem.getSale());
 
-        // ✅ VALIDATION AVEC LE SERVICE OPTIMISTE
+        //  VALIDATION AVEC LE SERVICE OPTIMISTE
         validateStockAvailability(saleItem.getProduct(), saleItem.getSale().getClient().getUserId(), newQuantity.intValue());
 
         saleItem.setQuantitySold(newQuantity);
@@ -231,7 +231,7 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
     @Transactional
     public PaymentResultDTO processPayment2(UUID saleId, String paymentType,
                                            BigDecimal amountReceived, String currency) {
-        log.info("💳 Traitement du paiement pour la vente: {} - Type: {}, Montant: {}",
+        log.info(" Traitement du paiement pour la vente: {} - Type: {}, Montant: {}",
                 saleId, paymentType, amountReceived);
 
         Sale sale = findSaleOrThrow(saleId);
@@ -349,7 +349,7 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
     }
 
     /**
-     * ✅ AJOUT DE PRODUIT AVEC VALIDATION OPTIMISTE
+     * AJOUT DE PRODUIT AVEC VALIDATION OPTIMISTE
      */
     private SaleItemResponseDTO addProductInternal(Sale sale, Product product, BigDecimal quantity) {
         // 1. Validation immédiate du stock disponible
@@ -365,7 +365,7 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
     }
 
     /**
-     * ✅ VALIDATION DE STOCK AVEC SERVICE OPTIMISTE
+     *  VALIDATION DE STOCK AVEC SERVICE OPTIMISTE
      */
     private void validateStockAvailability(Product product, UUID clientId, int requestedQuantity) {
         if (product.getQuantity() < requestedQuantity) {
@@ -382,7 +382,7 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
     }
 
     /**
-     * ✅ MISE À JOUR D'ARTICLE EXISTANT AVEC VALIDATION
+     *  MISE À JOUR D'ARTICLE EXISTANT AVEC VALIDATION
      */
     private SaleItemResponseDTO updateExistingItem(SaleItem item, BigDecimal additionalQuantity) {
         BigDecimal newQuantity = item.getQuantitySold().add(additionalQuantity);
@@ -405,7 +405,7 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
     }
 
     /**
-     * ✅ CRÉATION DE NOUVEL ARTICLE AVEC VALIDATION
+     *  CRÉATION DE NOUVEL ARTICLE AVEC VALIDATION
      */
     private SaleItemResponseDTO createNewItem(Sale sale, Product product, BigDecimal quantity) {
         SaleItem newItem = SaleItem.builder()
@@ -435,7 +435,7 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
         }
     }
 
-    // ✅ AJOUTEZ CES MÉTHODES À VOTRE SaleService.java EXISTANT
+    //  AJOUTEZ CES MÉTHODES À VOTRE SaleService.java EXISTANT
 
     /**
      * Récupère les ventes en attente (non payées)
@@ -446,7 +446,7 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
                 .collect(Collectors.toList());
     }
 
-    // ✅ MODIFIEZ CES MÉTHODES DANS VOTRE SaleService.java
+    //  MODIFIEZ CES MÉTHODES DANS VOTRE SaleService.java
 
     /**
      * Top produits vendus aujourd'hui - ADAPTÉ
@@ -464,7 +464,7 @@ public class SaleService implements ISaleCreationService, ISaleItemService, ISal
      * Statistiques de ventes par heure - ADAPTÉ
      */
     public List<Object[]> getTodayHourlySalesStats(UUID clientId) {
-        // ✅ Passer l'UUID comme String pour la requête native
+        //  Passer l'UUID comme String pour la requête native
         return saleRepository.findTodayHourlySalesStats(clientId.toString());
     }
 

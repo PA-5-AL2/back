@@ -8,6 +8,7 @@ import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.time.temporal.ChronoUnit;
 
 /**
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -100,18 +101,21 @@ public class Promotion {
             return label;
         }
     }
+    private Timestamp getCurrentTimestamp() {
+        return Timestamp.valueOf(LocalDateTime.now().withNano(0));
+    }
 
     // ========== CALLBACKS ==========
     @PrePersist
     protected void onCreate() {
-        this.createdAt = new Timestamp(System.currentTimeMillis());
+        this.createdAt = getCurrentTimestamp();
         this.updatedAt = this.createdAt;
         calculatePromotionPrice();
     }
 
     @PreUpdate
     protected void onUpdate() {
-        this.updatedAt = new Timestamp(System.currentTimeMillis());
+        this.updatedAt = getCurrentTimestamp();
         calculatePromotionPrice();
     }
 
@@ -159,7 +163,7 @@ public class Promotion {
     public boolean isCurrentlyActive() {
         if (!isActive) return false;
 
-        Timestamp now = new Timestamp(System.currentTimeMillis());
+        Timestamp now = Timestamp.valueOf(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS));
         return now.compareTo(startDate) >= 0 && now.compareTo(endDate) <= 0;
     }
 
@@ -207,7 +211,7 @@ public class Promotion {
      * Vérifie si la promotion a expiré
      */
     public boolean isExpired() {
-        Timestamp now = new Timestamp(System.currentTimeMillis());
+        Timestamp now = getCurrentTimestamp();
         return now.compareTo(endDate) > 0;
     }
 
@@ -215,7 +219,7 @@ public class Promotion {
      * Vérifie si la promotion va commencer
      */
     public boolean isPending() {
-        Timestamp now = new Timestamp(System.currentTimeMillis());
+        Timestamp now = getCurrentTimestamp();
         return now.compareTo(startDate) < 0;
     }
 
